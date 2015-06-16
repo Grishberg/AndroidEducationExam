@@ -26,7 +26,7 @@
             android:layout_height="wrap_content"/>
     </LinearLayout>
 
-    <LinearLayout
+    <RelativeLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -35,19 +35,78 @@
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:layout_toLeftOf="@+id/relativeLayout"
+            android:layout_toStartOf="@+id/relativeLayout">
 
+            <EditText
+                android:id="@+id/fragment_article_edit_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/icons"
+                android:textColor="@color/primary_text"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="2dp"/>
+
+            <EditText
+                android:id="@+id/fragment_article_edit_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lines="6"
+                android:background="@color/icons"
+                android:textColor="@color/primary_text"
+                />
+
+            <Spinner
+                android:id="@+id/fragment_article_category_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                >
+            </Spinner>
+
+            <!-- published on off -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="40dip">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/fragment_article_publish_switch_text"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentLeft="true"/>
+
+                <Switch
+                    android:id="@+id/fragment_article_publish_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"/>
+            </RelativeLayout>
+
+            <Button
+                android:id="@+id/fragment_article_save_button"
+                android:text="@string/fragment_article_save_button_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
         </LinearLayout>
 
-        <!-- IMAGE -->
+        <!-- IMAGE  and button-->
         <RelativeLayout
             android:layout_width="@dimen/fragment_article_image_size"
-            android:layout_height="@dimen/fragment_article_image_size">
+            android:layout_height="@dimen/fragment_article_image_size"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:id="@+id/relativeLayout">
             <ImageView
                 android:id="@+id/fragment_articles_image"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 />
+
             <Button
                 android:id="@+id/fragment_article_image_change_button"
                 android:text="@string/fragment_articles_image_change_button_text"
@@ -57,7 +116,8 @@
                 android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="true"/>
         </RelativeLayout>
-    </LinearLayout>
+    </RelativeLayout>
+
     <!-- TODO: Update blank fragment layout -->
     <TextView
         android:layout_width="match_parent"

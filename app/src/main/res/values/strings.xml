@@ -14,4 +14,7 @@
     <string name="fragment_articles_edit_mode_text">Edit</string>
     <string name="fragment_articles_image_change_button_text">Change</string>
 
+    <string name="fragment_article_publish_switch_text">Published?</string>
+    <string name="fragment_article_save_button_text">Save</string>
+
 </resources>

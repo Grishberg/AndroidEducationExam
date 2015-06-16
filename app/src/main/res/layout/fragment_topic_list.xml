@@ -22,7 +22,10 @@
             android:layout_width="@dimen/fragment_topiclist_refresh_button_size"
             android:layout_height="@dimen/fragment_topiclist_refresh_button_size"
             android:layout_alignParentLeft="true"
-            android:id="@+id/imageButton"/>
+            android:id="@+id/imageButton"
+            android:src="@drawable/refresh"
+            android:scaleType="centerCrop"
+            android:background="@color/primary"/>
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -34,7 +37,9 @@
             android:layout_width="@dimen/fragment_topiclist_search_button_size"
             android:layout_height="@dimen/fragment_topiclist_search_button_size"
             android:layout_alignParentRight="true"
-            android:id="@+id/imageView"/>
+            android:id="@+id/imageView"
+            android:src="@drawable/search"
+            android:scaleType="centerInside"/>
 
     </RelativeLayout>
     <TextView
