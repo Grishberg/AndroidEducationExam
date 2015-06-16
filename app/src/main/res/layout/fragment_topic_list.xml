@@ -1,0 +1,123 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             tools:context="com.grishberg.android_test_exam.ui.fragments.TopicListFragment"
+             android:background="@color/primary"
+              android:orientation="vertical"
+    >
+    <Spinner
+        android:id="@+id/fragment_topiclist_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/icons">
+
+    </Spinner>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:layout_width="@dimen/fragment_topiclist_refresh_button_size"
+            android:layout_height="@dimen/fragment_topiclist_refresh_button_size"
+            android:layout_alignParentLeft="true"
+            android:id="@+id/imageButton"/>
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/imageButton"
+            android:layout_toLeftOf="@+id/imageView"
+            android:layout_toStartOf="@+id/imageView"
+            android:layout_centerVertical="true"/>
+        <ImageView
+            android:layout_width="@dimen/fragment_topiclist_search_button_size"
+            android:layout_height="@dimen/fragment_topiclist_search_button_size"
+            android:layout_alignParentRight="true"
+            android:id="@+id/imageView"/>
+
+    </RelativeLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/fragment_topiclist_filter_text"/>
+    <!-- Filter only my -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/fragment_topiclist_filter_onlymy"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"/>
+        <Switch
+            android:id="@+id/fragment_topiclist_switch_onlymy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="40dp"/>
+    </RelativeLayout>
+
+    <!-- Filter unpublished -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="40dip">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/fragment_topiclist_filter_unpublished"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"/>
+        <Switch
+            android:id="@+id/fragment_topiclist_switch_unpublished"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"/>
+    </RelativeLayout>
+
+    <!-- Listview -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ListView
+            android:id="@+id/fragment_topiclist_listview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/primary"
+            android:layout_alignParentTop="true"
+            >
+
+        </ListView>
+
+        <ExpandableListView
+            android:id="@+id/fragment_topiclist_explistview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/primary"
+            android:layout_alignParentTop="true"
+            android:visibility="gone"
+            >
+
+        </ExpandableListView>
+
+        <Button
+            android:id="@+id/fragment_topiclist_action"
+            android:src="@drawable/circle"
+            android:text="+"
+            android:layout_width="@dimen/fragment_topiclist_action_size"
+            android:layout_height="@dimen/fragment_topiclist_action_size"
+            android:background="@drawable/circle"
+            android:layout_gravity="right|bottom"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="@dimen/fragment_topiclist_action_button_range"
+            android:layout_marginEnd="@dimen/fragment_topiclist_action_button_range"
+            android:layout_marginBottom="@dimen/fragment_topiclist_action_button_range"/>
+    </RelativeLayout>
+
+</LinearLayout>

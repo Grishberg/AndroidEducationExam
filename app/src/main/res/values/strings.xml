@@ -3,4 +3,15 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+
+<!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="fragment_topiclist_filter_text">Filters:</string>
+    <string name="fragment_topiclist_filter_onlymy">Only my</string>
+    <string name="fragment_topiclist_filter_unpublished">unpublished</string>
+
+    <string name="fragment_articles_view_mode_text">View</string>
+    <string name="fragment_articles_edit_mode_text">Edit</string>
+    <string name="fragment_articles_image_change_button_text">Change</string>
+
 </resources>

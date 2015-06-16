@@ -1,4 +1,4 @@
-package com.grishberg.android_test_exam;
+package com.grishberg.android_test_exam.ui.activities;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
