@@ -17,4 +17,7 @@
     <string name="fragment_article_publish_switch_text">Published?</string>
     <string name="fragment_article_save_button_text">Save</string>
 
+    <string name="listview_caption">listview</string>
+    <string name="listviewex_caption">expand listview</string>
+
 </resources>

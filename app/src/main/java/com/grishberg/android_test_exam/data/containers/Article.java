@@ -17,6 +17,7 @@ public class Article {
 	private boolean isPublished;
 	private long	categoryId;
 	private Category category;
+	private int 	idAuthor;
 
 	private Article(long id, String title, String description, String photoUrl, boolean isPublished
 			, long categoryId) {

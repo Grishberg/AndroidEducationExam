@@ -1,12 +1,24 @@
 package com.grishberg.android_test_exam.ui.activities;
 
+import android.app.Activity;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.grishberg.android_test_exam.R;
+import com.grishberg.android_test_exam.ui.listeners.IActivityArticleInteractionListener;
+import com.grishberg.android_test_exam.ui.listeners.IActivityTopicListInteractionListener;
+import com.grishberg.android_test_exam.ui.listeners.IArticleFragmentInteractionListener;
+import com.grishberg.android_test_exam.ui.listeners.ITopicListFragmentInteraction;
 
-public class MainActivity extends ActionBarActivity {
+
+public class MainActivity extends Activity implements
+		IArticleFragmentInteractionListener
+	, ITopicListFragmentInteraction
+{
+	private IActivityArticleInteractionListener 	mArticleFragment;
+	private IActivityTopicListInteractionListener	mTopiclistFragment;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -14,25 +26,25 @@ public class MainActivity extends ActionBarActivity {
 		setContentView(R.layout.activity_main);
 	}
 
+
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.menu_main, menu);
-		return true;
+	public void onRegister(IActivityArticleInteractionListener fragment) {
+		mArticleFragment	= fragment;
 	}
 
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-
-		//noinspection SimplifiableIfStatement
-		if (id == R.id.action_settings) {
-			return true;
-		}
-
-		return super.onOptionsItemSelected(item);
+	public void onUnregister(IActivityArticleInteractionListener fragment) {
+		mArticleFragment	= null;
 	}
+
+	@Override
+	public void onRegister(IActivityTopicListInteractionListener fragment) {
+		mTopiclistFragment	= fragment;
+	}
+
+	@Override
+	public void onUnregister(IActivityTopicListInteractionListener fragment) {
+		mTopiclistFragment	= null;
+	}
+
 }
