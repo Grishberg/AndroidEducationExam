@@ -12,7 +12,7 @@ import android.widget.CursorAdapter;
 public class ListViewCursorAdapter extends CursorAdapter {
 
 	public ListViewCursorAdapter(Context context){
-		super(context);
+		super(context,null);
 	}
 	@Override
 	public View newView(Context context, Cursor cursor, ViewGroup parent) {

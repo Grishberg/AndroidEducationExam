@@ -1,13 +1,13 @@
 <resources>
     <!-- Default screen margins, per the Android Design guidelines. -->
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="activity_horizontal_margin">1dp</dimen>
+    <dimen name="activity_vertical_margin">1dp</dimen>
 
-    <dimen name="fragment_topiclist_refresh_button_size">64dp</dimen>
-    <dimen name="fragment_topiclist_search_button_size">64dp</dimen>
+    <dimen name="fragment_topiclist_refresh_button_size">32dp</dimen>
+    <dimen name="fragment_topiclist_search_button_size">32dp</dimen>
     <dimen name="fragment_topiclist_action_size">40dp</dimen>
     <dimen name="fragment_topiclist_action_button_range">34dp</dimen>
 
-    <dimen name="fragment_article_image_size">150dp</dimen>
+    <dimen name="fragment_article_image_size">100dp</dimen>
 
 </resources>

@@ -1,9 +1,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             tools:context="com.grishberg.android_test_exam.ui.fragments.TopicListFragment"
-             android:background="@color/primary"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              tools:context="com.grishberg.android_test_exam.ui.fragments.TopicListFragment"
+              android:background="@color/primary"
               android:orientation="vertical"
     >
     <Spinner
@@ -63,14 +64,14 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
-            android:layout_marginRight="40dp"/>
+            />
     </RelativeLayout>
 
     <!-- Filter unpublished -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginRight="40dip">
+        >
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -110,20 +111,18 @@
 
         </ExpandableListView>
 
-        <Button
-            android:id="@+id/fragment_topiclist_action"
-            android:src="@drawable/circle"
-            android:text="+"
-            android:layout_width="@dimen/fragment_topiclist_action_size"
-            android:layout_height="@dimen/fragment_topiclist_action_size"
-            android:background="@drawable/circle"
-            android:layout_gravity="right|bottom"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
-            android:layout_marginRight="@dimen/fragment_topiclist_action_button_range"
-            android:layout_marginEnd="@dimen/fragment_topiclist_action_button_range"
-            android:layout_marginBottom="@dimen/fragment_topiclist_action_button_range"/>
+        <android.support.design.widget.FloatingActionButton
+            app:fabSize="mini"
+
+            android:id="@+id/fragment_topiclist_add_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/add"
+            app:elevation="4dp"
+            app:borderWidth="0dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"/>
+
     </RelativeLayout>
 
 </LinearLayout>

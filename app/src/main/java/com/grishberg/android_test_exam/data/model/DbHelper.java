@@ -10,7 +10,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DbHelper extends SQLiteOpenHelper {
 
 	private static final String DB_NAME 			= "articles.db";
-	private static final int 	DB_VERSION 			= 1;
+	private static final int 	DB_VERSION 			= 2;
 
 	public static final String COLUMN_ID 			= "_id";
 
@@ -18,11 +18,15 @@ public class DbHelper extends SQLiteOpenHelper {
 	public static final String CATEGORIES_TITLE		= "title";
 
 	public static final String TABLE_ARTICLES		= "articles";
+	public static final String ARTICLES_SERVER_ID	= "id";
 	public static final String ARTICLES_TITLE		= "title";
 	public static final String ARTICLES_DESCRIPTION	= "description";
 	public static final String ARTICLES_PUBLISHED	= "published";
 	public static final String ARTICLES_CATEGORY_ID	= "category_id";
 	public static final String ARTICLES_PHOTO_URL	= "photo_url";
+	public static final String ARTICLES_CREATED		= "created";
+	public static final String ARTICLES_UPDATED		= "updated";
+
 
 	private static final String CREATE_TABLE_CATEGORIES = "" +
 			"CREATE TABLE " + TABLE_CATEGORIES + "(" +
@@ -37,7 +41,9 @@ public class DbHelper extends SQLiteOpenHelper {
 			ARTICLES_TITLE +			" text," +
 			ARTICLES_DESCRIPTION +		" text," +
 			ARTICLES_PHOTO_URL +		" text," +
-			ARTICLES_PUBLISHED +		" integer" +
+			ARTICLES_PUBLISHED +		" integer," +
+			ARTICLES_CREATED +			" integer," +
+			ARTICLES_UPDATED +			" integer" +
 			");";
 
 	public DbHelper(Context context) {

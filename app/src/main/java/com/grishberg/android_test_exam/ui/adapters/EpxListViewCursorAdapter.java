@@ -11,6 +11,9 @@ import android.widget.CursorTreeAdapter;
  */
 public class EpxListViewCursorAdapter extends CursorTreeAdapter {
 
+	public EpxListViewCursorAdapter(Context context){
+		super(null,context);
+	}
 	@Override
 	protected Cursor getChildrenCursor(Cursor groupCursor) {
 		return null;

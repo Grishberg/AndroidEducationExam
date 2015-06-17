@@ -6,4 +6,6 @@ package com.grishberg.android_test_exam.ui.listeners;
 public interface ITopicListFragmentInteraction {
 	void onRegister(IActivityTopicListInteractionListener fragment);
 	void onUnregister(IActivityTopicListInteractionListener fragment);
+	void onItemClicked(long id);
+	void onCreateNewArticle();
 }

@@ -27,7 +27,7 @@ public class ApiServiceHelper {
 	}
 
 	public void getData(DataRequest data, ResultReceiver onServiceResult){
-		startService(data, ApiService.ACTION_GET_DATA, onServiceResult);
+		//startService(data, ApiService.ACTION_GET_DATA, onServiceResult);
 	}
 
 	 /*

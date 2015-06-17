@@ -8,6 +8,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.text.TextUtils;
 
 /**
  * Created by grigoriy on 16.06.15.
@@ -24,12 +25,14 @@ public class AppContentProvider extends ContentProvider {
 
 	private static final int CODE_CATEGORIES		= 0;
 	private static final int CODE_ARTICLES			= 1;
+	private static final int CODE_ARTICLES_ID		= 2;
 
 	private static final UriMatcher URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
 
 	static {
 		URI_MATCHER.addURI(AUTHORITY, PATH_CATEGORIES, CODE_CATEGORIES);
 		URI_MATCHER.addURI(AUTHORITY, PATH_ARTICLES, CODE_ARTICLES);
+		URI_MATCHER.addURI(AUTHORITY, PATH_ARTICLES+ "/#", CODE_ARTICLES_ID);
 	}
 
 	private static DbHelper dbHelper;
@@ -78,9 +81,30 @@ public class AppContentProvider extends ContentProvider {
 
 	@Override
 	public int delete(Uri uri, String selection, String[] selectionArgs) {
-		String table = parseUri(uri);
+		int result = 0;
+		int uriId = URI_MATCHER.match(uri);
 		SQLiteDatabase db = dbHelper.getWritableDatabase();
-		int result = db.delete(table, selection, selectionArgs);
+		switch (uriId){
+			case CODE_ARTICLES:
+				// delete all articles
+				result	= db.delete(DbHelper.TABLE_ARTICLES, selection, selectionArgs);
+				break;
+
+			case CODE_ARTICLES_ID:
+				// delete by ID
+				String id	= uri.getLastPathSegment();
+				if (TextUtils.isEmpty(selection)) {
+					result = db.delete(DbHelper.TABLE_ARTICLES
+							, DbHelper.COLUMN_ID + " = " + id, selectionArgs);
+				} else {
+					result = db.delete(DbHelper.TABLE_ARTICLES
+							, DbHelper.COLUMN_ID + " = " + id + " AND " + selection, selectionArgs);
+				}
+				break;
+			case CODE_CATEGORIES:
+				result	= db.delete(DbHelper.TABLE_CATEGORIES,selection,selectionArgs);
+				break;
+		}
 
 		getContext().getContentResolver().notifyChange(uri, null);
 		return result;
@@ -88,10 +112,31 @@ public class AppContentProvider extends ContentProvider {
 
 	@Override
 	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-		String table = parseUri(uri);
+		int result = 0;
+		int uriId = URI_MATCHER.match(uri);
 		SQLiteDatabase db = dbHelper.getWritableDatabase();
-		int result = db.update(table, values, selection, selectionArgs);
+		switch (uriId){
+			case CODE_ARTICLES:
+				// delete all articles
+				result	= db.update(DbHelper.TABLE_ARTICLES, values, selection, selectionArgs);
+				break;
 
+			case CODE_ARTICLES_ID:
+				// delete by ID
+				String id	= uri.getLastPathSegment();
+				if (TextUtils.isEmpty(selection)) {
+					result = db.update(DbHelper.TABLE_ARTICLES
+							, values, DbHelper.COLUMN_ID + " = " + id, selectionArgs);
+				} else {
+					result = db.update(DbHelper.TABLE_ARTICLES
+							, values, DbHelper.COLUMN_ID + " = " + id + " AND "
+							+ selection, selectionArgs);
+				}
+				break;
+			case CODE_CATEGORIES:
+				result	= db.update(DbHelper.TABLE_CATEGORIES, values, selection,selectionArgs);
+				break;
+		}
 		getContext().getContentResolver().notifyChange(uri, null);
 		return result;
 	}
@@ -107,6 +152,7 @@ public class AppContentProvider extends ContentProvider {
 				table = dbHelper.TABLE_CATEGORIES;
 				break;
 			case CODE_ARTICLES:
+			case CODE_ARTICLES_ID:
 				table = dbHelper.TABLE_ARTICLES;
 				break;
 			default:

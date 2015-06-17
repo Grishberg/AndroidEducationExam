@@ -20,4 +20,7 @@
     <string name="listview_caption">listview</string>
     <string name="listviewex_caption">expand listview</string>
 
+    <string name="action_delete_listview_text">delete</string>
+    <string name="action_delete_listviewex_text">delete</string>
+
 </resources>
