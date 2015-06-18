@@ -8,6 +8,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.app.LoaderManager;
+import android.os.Handler;
+import android.os.ResultReceiver;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.ContextMenu;
@@ -27,6 +29,10 @@ import android.widget.Spinner;
 import android.widget.Switch;
 
 import com.grishberg.android_test_exam.R;
+import com.grishberg.android_test_exam.data.api.ApiService;
+import com.grishberg.android_test_exam.data.api.ApiServiceHelper;
+import com.grishberg.android_test_exam.data.api.request.DataRequest;
+import com.grishberg.android_test_exam.data.api.response.DataResponse;
 import com.grishberg.android_test_exam.data.model.AppContentProvider;
 import com.grishberg.android_test_exam.data.model.DbHelper;
 import com.grishberg.android_test_exam.ui.adapters.EpxListViewCursorAdapter;
@@ -72,9 +78,17 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 		// Inflate the layout for this fragment
 		View view	= inflater.inflate(R.layout.fragment_topic_list, container, false);
 
+		// init ListView
 		mListView	= (ListView) view.findViewById(R.id.fragment_topiclist_listview);
+		mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+				onListViewItemClicked(id);
+			}
+		});
 		registerForContextMenu(mListView);
 
+		//init ExpandableListView
 		mListViewEx	= (ExpandableListView) view.findViewById(R.id.fragment_topiclist_explistview);
 
 		// refresh button
@@ -119,6 +133,7 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 				onAddNewArticle();
 			}
 		});
+		// set projection
 		mProjection = new String[] {DbHelper.COLUMN_ID, DbHelper.ARTICLES_TITLE};
 		fillData();
 		return view;
@@ -139,7 +154,7 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 	}
 
 	private void fillData() {
-		//  1) load articles
+		//  1) load articles from db
 
 		// Fields from the database (projection)
 		// Must include the _id column for the adapter to work
@@ -152,6 +167,20 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 		mListViewCursorAdapter = new SimpleCursorAdapter(getActivity(), R.layout.topiclist_listview_cell
 				, null, from, to, 0);
 		mListView.setAdapter(mListViewCursorAdapter);
+
+		//	2) load articles from server
+		ApiServiceHelper.getInstance().getArticles(new DataRequest(), new ResultReceiver(new Handler()) {
+			@Override
+			protected void onReceiveResult(int resultCode, Bundle resultData) {
+				if (resultData.containsKey(ApiService.ERROR_KEY)) {
+
+				} else {
+					DataResponse response = (DataResponse) resultData
+							.getSerializable(ApiService.RESPONSE_OBJECT_KEY);
+					// categories received from server, get it from content provider
+				}
+			}
+		});
 	}
 
 	/**
@@ -163,6 +192,14 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 
 	private void onAddNewArticle(){
 		mListener.onCreateNewArticle();
+	}
+
+	/**
+	 * event when user click on LV
+	 * @param id
+	 */
+	private void onListViewItemClicked(long id){
+		mListener.onItemClicked(id);
 	}
 
 	@Override
@@ -205,12 +242,16 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 
 	@Override
 	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-		mListViewCursorAdapter.swapCursor(data);
+		if(loader.getId() == ARTICLES_LOADER) {
+			mListViewCursorAdapter.swapCursor(data);
+		}
 	}
 
 	@Override
 	public void onLoaderReset(Loader<Cursor> loader) {
-		mListViewCursorAdapter.changeCursor(null);
+		if(loader.getId() == ARTICLES_LOADER) {
+			mListViewCursorAdapter.changeCursor(null);
+		}
 
 	}
 
@@ -261,8 +302,7 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 			case R.id.action_delete_listview:
 				AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item
 						.getMenuInfo();
-				Uri uri = Uri.parse(AppContentProvider.CONTENT_URI_ARTICLES + "/"
-						+ info.id);
+				Uri uri = AppContentProvider.getArticlesUri( info.id );
 				getActivity().getContentResolver().delete(uri, null, null);
 				return true;
 

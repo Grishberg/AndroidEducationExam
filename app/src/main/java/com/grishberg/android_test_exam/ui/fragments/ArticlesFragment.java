@@ -1,38 +1,50 @@
 package com.grishberg.android_test_exam.ui.fragments;
 
 import android.app.Activity;
+import android.app.Fragment;
+import android.app.LoaderManager;
 import android.content.ContentValues;
+import android.content.CursorLoader;
+import android.content.Loader;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.app.Fragment;
+import android.os.Handler;
+import android.os.ResultReceiver;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Switch;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.grishberg.android_test_exam.AppController;
 import com.grishberg.android_test_exam.R;
+import com.grishberg.android_test_exam.data.api.ApiService;
+import com.grishberg.android_test_exam.data.api.ApiServiceHelper;
+import com.grishberg.android_test_exam.data.api.request.DataRequest;
+import com.grishberg.android_test_exam.data.api.response.DataResponse;
 import com.grishberg.android_test_exam.data.containers.Article;
 import com.grishberg.android_test_exam.data.containers.Category;
 import com.grishberg.android_test_exam.data.model.AppContentProvider;
 import com.grishberg.android_test_exam.data.model.DbHelper;
-import com.grishberg.android_test_exam.ui.adapters.ListViewCursorAdapter;
 import com.grishberg.android_test_exam.ui.listeners.IActivityArticleInteractionListener;
 import com.grishberg.android_test_exam.ui.listeners.IArticleFragmentInteractionListener;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class ArticlesFragment extends Fragment implements IActivityArticleInteractionListener
-		, AdapterView.OnItemClickListener{
+		, LoaderManager.LoaderCallbacks<Cursor>{
+
+	private static final int GET_CURRENT_ARTICLE_LOADER = 1;
+	private static final int GET_CATEGORIES_LOADER 		= 2;
 
 	private static final String PARAM_ARTICLE_ID = "paramArticleId";
-
 	private static final String STATE_ARTICLE_ID			= "stateArticleId";
 	private static final String STATE_ARTICLE_TITLE			= "stateArticleTilte";
 	private static final String STATE_ARTICLE_DESCRIPTION	= "stateArticleDescription";
@@ -47,10 +59,15 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 	private long mCreatedDate;
 	private ArrayList<Category> mCategories;
 	private Uri mArticleUri;
+	String[] mArticlesProjection;
+	String[] mCategoriesProjection;
 
 	// controls
 	private EditText 	mTitleEdit;
 	private EditText 	mDescriptionEdit;
+	private Button		mViewButton;
+	private Button		mEditButton;
+	private Button		mSaveButton;
 	private Spinner		mSpinner;
 	private Switch		mIsPublishedSwitch;
 
@@ -91,19 +108,36 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 							 Bundle savedInstanceState) {
 		// Inflate the layout for this fragment
 		View view			= inflater.inflate(R.layout.fragment_articles, container, false);
-
+		mCategories			= new ArrayList<>();
 		mTitleEdit			= (EditText) view.findViewById(R.id.fragment_article_edit_title);
 		mDescriptionEdit	= (EditText) view.findViewById(R.id.fragment_article_edit_description);
 
 		mSpinner			= (Spinner) view.findViewById(R.id.fragment_article_category_spinner);
+		mSpinner.setEnabled(false);
+
 		mIsPublishedSwitch	= (Switch)	view.findViewById(R.id.fragment_article_publish_switch);
+
+		// buttons
+		mViewButton			= (Button)	view.findViewById(R.id.fragment_article_view_button);
+		mViewButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onViewModeButtonClicked();
+			}
+		});
+
+		mEditButton			= (Button)	view.findViewById(R.id.fragment_article_edit_button);
+		mEditButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onEditModeButtonClicked();
+			}
+		});
 
 		// restore fields if need
 		if(savedInstanceState != null){
-			ArrayList<Category> categories = savedInstanceState.getParcelableArrayList(STATE_CATEGORIES);
-
-			onCategoriesReceived(categories,
-					savedInstanceState.getInt(STATE_ARTICLE_CATEGORY));
+			mCategories = savedInstanceState.getParcelableArrayList(STATE_CATEGORIES);
+			onCategoriesReceived(savedInstanceState.getInt(STATE_ARTICLE_CATEGORY));
 			mArticleId	= savedInstanceState.getLong(STATE_ARTICLE_ID);
 			mTitleEdit.setText(savedInstanceState.getString(STATE_ARTICLE_TITLE));
 			mDescriptionEdit.setText(savedInstanceState.getString(STATE_ARTICLE_DESCRIPTION));
@@ -112,26 +146,71 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 			getCategories();
 		}
 
-		view.findViewById(R.id.fragment_article_save_button).setOnClickListener(new View.OnClickListener() {
+		mSaveButton	= (Button) view.findViewById(R.id.fragment_article_save_button);
+		mSaveButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				onSavePressed();
 			}
 		});
 
+		// set projection
+		mArticlesProjection = new String[] {DbHelper.COLUMN_ID
+				, DbHelper.ARTICLES_SERVER_ID
+				, DbHelper.ARTICLES_CATEGORY_ID
+				, DbHelper.ARTICLES_TITLE
+				, DbHelper.ARTICLES_DESCRIPTION
+				, DbHelper.ARTICLES_PHOTO_URL
+				, DbHelper.ARTICLES_PUBLISHED
+				, DbHelper.ARTICLES_CREATED
+				, DbHelper.ARTICLES_UPDATED
+				, DbHelper.ARTICLES_OWN
+		};
+
+		mCategoriesProjection = new String[] {DbHelper.COLUMN_ID
+				, DbHelper.CATEGORIES_TITLE
+		};
+
 		return view;
 	}
 	//TODO: get from server
 	private void getCategories(){
-		ArrayList<Category> categories = new ArrayList<>(3);
-		categories.add(new Category(1, "Best"));
-		categories.add(new Category(2, "Fast"));
-		categories.add(new Category(3, "Cool"));
-		onCategoriesReceived(categories,0);
+
+		ApiServiceHelper.getInstance().getCategories(new DataRequest(), new ResultReceiver(new Handler()) {
+			@Override
+			protected void onReceiveResult(int resultCode, Bundle resultData) {
+				if (resultData.containsKey(ApiService.ERROR_KEY)) {
+					getCategoriesFromDb();
+				} else {
+					DataResponse response = (DataResponse) resultData
+							.getSerializable(ApiService.RESPONSE_OBJECT_KEY);
+					// categories received from server, get it from content provider
+					getCategoriesFromDb();
+				}
+			}
+		});
 	}
 
-	private void onCategoriesReceived(ArrayList<Category> categories, int initCategoryIndex){
-		mCategories	= categories;
+	/**
+	 * fill categories array from cursor
+	 * @param cursor
+	 */
+	private void addCategoriesFromCursor(Cursor cursor){
+
+		cursor.moveToFirst();
+		while (cursor.moveToNext()) {
+			Category category	= Category.fromCursor(cursor);
+			mCategories.add(category);
+		}
+		cursor.close();
+		onCategoriesReceived(0);
+	}
+
+	private void getCategoriesFromDb() {
+		getLoaderManager().restartLoader(GET_CATEGORIES_LOADER, null, this);
+	}
+
+	private void onCategoriesReceived(int initCategoryIndex){
 		// fill spinner with categories
 		ArrayAdapter<Category> adapter = new ArrayAdapter<Category>(getActivity()
 				, android.R.layout.simple_spinner_item
@@ -140,17 +219,56 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 		mSpinner.setSelection(initCategoryIndex);
 	}
 
+	private void onViewModeButtonClicked(){
+		mTitleEdit.setEnabled(false);
+		mDescriptionEdit.setEnabled(false);
+		mSaveButton.setVisibility(View.INVISIBLE);
+		mIsPublishedSwitch.setEnabled(false);
+		mViewButton.setEnabled(false);
+		mSpinner.setEnabled(false);
+	}
+
+	private void onEditModeButtonClicked(){
+		mTitleEdit.setEnabled(false);
+		mDescriptionEdit.setEnabled(false);
+		mSaveButton.setVisibility(View.VISIBLE);
+		mIsPublishedSwitch.setEnabled(true);
+		mEditButton.setEnabled(false);
+		mSpinner.setEnabled(true);
+	}
+
 	/**
 	 * save article
 	 */
 	private void onSavePressed(){
-		// 1) save to DB
+		// 1) save to server
+
+		// 2) get result's idFromServer
+		// 3) save to DB
+		long idFromServer	= 0;
 		String title		=  mTitleEdit.getText().toString();
 		String description	= mDescriptionEdit.getText().toString();
 		long updated		= (new Date()).getTime();
 		long categoryId		= mCategories.get(mSpinner.getSelectedItemPosition()).getId();
 		if (mCreatedDate == 0) mCreatedDate = updated;
 		boolean isPublished	= mIsPublishedSwitch.isChecked();
+
+		Article article 	= new Article(-1,title, description, "", false, categoryId
+				, 0,0,true);
+		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		ApiServiceHelper.getInstance().putArticle(gson.toJson(article), new ResultReceiver(new Handler()) {
+			@Override
+			protected void onReceiveResult(int resultCode, Bundle resultData) {
+				if (resultData.containsKey(ApiService.ERROR_KEY)) {
+					getCategoriesFromDb();
+				} else {
+					DataResponse response = (DataResponse) resultData
+							.getSerializable(ApiService.RESPONSE_OBJECT_KEY);
+					// categories received from server, get it from content provider
+					getCategoriesFromDb();
+				}
+			}
+		});
 		// only save if title or description
 		// is available
 
@@ -159,12 +277,14 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 		}
 
 		ContentValues values = new ContentValues();
+		values.put(DbHelper.ARTICLES_SERVER_ID, 	idFromServer);
 		values.put(DbHelper.ARTICLES_TITLE, 		title);
 		values.put(DbHelper.ARTICLES_DESCRIPTION, 	description);
 		values.put(DbHelper.ARTICLES_CATEGORY_ID, 	categoryId);
+		values.put(DbHelper.ARTICLES_PUBLISHED, 	isPublished);
 		values.put(DbHelper.ARTICLES_CREATED, 		mCreatedDate);
 		values.put(DbHelper.ARTICLES_UPDATED, 		updated);
-		values.put(DbHelper.ARTICLES_PUBLISHED, 	isPublished);
+		values.put(DbHelper.ARTICLES_OWN,			true);
 
 
 		if (mArticleUri == null) {
@@ -180,14 +300,110 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 		// 2) send to server
 	}
 
+	// user create new article
+	@Override
+	public void onCreateNewArticle() {
+		// set defaults values
+		mArticleUri	= null;
+		mTitleEdit.setText("");
+		mDescriptionEdit.setText("");
+		mSpinner.setSelection(0);
+		mIsPublishedSwitch.setChecked(false);
+	}
+
 	@Override
 	public void onOpenArticle(long id) {
 		// open article data from cursorLoader
+		Bundle args	= new Bundle();
+		args.putLong(PARAM_ARTICLE_ID,id);
+		getLoaderManager().restartLoader(GET_CURRENT_ARTICLE_LOADER, args, this);
 	}
 
-	// spinner category changed
+	/**
+	 * get data from cursor and put to UI
+	 * @param cursor
+	 */
+	private void fillUiWithData(Cursor cursor){
+		cursor.moveToFirst();
+		Article currentArticle	= Article.fromCursor(cursor);
+
+		mTitleEdit.setText(currentArticle.getTitle());
+		mDescriptionEdit.setText(currentArticle.getDescription());
+		mIsPublishedSwitch.setChecked(currentArticle.isPublished());
+
+		int spinnerSelection = getCategoryIndexById(currentArticle.getCategoryId());
+		if( spinnerSelection >= 0){
+			mSpinner.setSelection(spinnerSelection);
+		}
+
+		// can we edit article?
+		mEditButton.setEnabled(currentArticle.getIsMine());
+		//mViewButton.setEnabled(currentArticle.getIsMine());
+		// always close the cursor
+		cursor.close();
+	}
+
+	private int getCategoryIndexById(long id){
+		for(int i = 0; i < mCategories.size(); i++){
+			if(mCategories.get(i).getId() == id){
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	//------ Cursor Loader ------
 	@Override
-	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+
+		switch (id) {
+			case GET_CURRENT_ARTICLE_LOADER:
+				// Returns a new CursorLoader
+				long articleId			= args.getLong(PARAM_ARTICLE_ID);
+				return new CursorLoader(
+						getActivity(),   // Parent activity context
+						AppContentProvider.getArticlesUri(articleId), // Table to query
+						mArticlesProjection,     // Projection to return
+						null,            // No selection clause
+						null,            // No selection arguments
+						null             // Default sort order
+				);
+			case GET_CATEGORIES_LOADER:
+				// Returns a new CursorLoader
+				return new CursorLoader(
+						getActivity(),   // Parent activity context
+						AppContentProvider.CONTENT_URI_CATEGORIES, // Table to query
+						mCategoriesProjection,     // Projection to return
+						null,            // No selection clause
+						null,            // No selection arguments
+						null             // Default sort order
+				);
+			default:
+				// An invalid id was passed in
+				return null;
+		}
+	}
+
+	@Override
+	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+		switch (loader.getId() ){
+
+			case GET_CURRENT_ARTICLE_LOADER:
+				if (data != null){
+					fillUiWithData(data);
+				}
+				break;
+
+			case GET_CATEGORIES_LOADER:
+				if( data != null) {
+					addCategoriesFromCursor(data);
+				}
+				break;
+		}
+	}
+
+	@Override
+	public void onLoaderReset(Loader<Cursor> loader) {
 
 	}
 

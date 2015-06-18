@@ -23,7 +23,11 @@ public class ApiService extends IntentService {
 	public static final String REQUEST_OBJECT_KEY	= "REQUEST_OBJECT_KEY";
 	public static final String RESPONSE_OBJECT_KEY	= "RESPONSE_OBJECT_KEY";
 
-	public static final int ACTION_GET_DATA = 1;
+	public static final int ACTION_GET_CATEGORIES	= 1;
+	public static final int ACTION_GET_ARTICLES		= 2;
+	public static final int ACTION_PUT_ARTICLE		= 3;
+
+
 
 	private boolean 		destroyed;
 	private ResultReceiver	receiver;
@@ -40,24 +44,67 @@ public class ApiService extends IntentService {
 	protected void onHandleIntent(Intent intent) {
 		receiver	= intent.getParcelableExtra(CALLBACK_KEY);
 		int action	= intent.getIntExtra(ACTION_KEY, -1);
+		// do process request with server
 		Bundle data	= processIntent(intent, action);
+		// return result
 		sentMessage(action, data);
 	}
 
 	private Bundle processIntent(Intent intent, int  action){
 		switch (action){
-			case ACTION_GET_DATA:
-				return getData((DataRequest) getRequestObject(intent));
+			case ACTION_GET_CATEGORIES:
+				return getCategories((DataRequest) getRequestObject(intent));
+			case ACTION_GET_ARTICLES:
+				return getArticles((DataRequest) getRequestObject(intent));
+			case ACTION_PUT_ARTICLE:
+				return put((DataRequest) getRequestObject(intent));
+
+
 		}
 		return null;
 	}
 
+	private Bundle getCategories(DataRequest request){
+		Requester requester = new Requester();
+		Bundle bundle = new Bundle();
+		DataResponse response = requester.getCategories(request);
+		if(response == null){
+			bundle.putBoolean(ERROR_KEY, true);
+		} else {
+			bundle.putSerializable(RESPONSE_OBJECT_KEY, response);
+		}
+		return bundle;
+	}
+
+	private Bundle getArticles(DataRequest request){
+		Requester requester		= new Requester();
+		Bundle bundle			= new Bundle();
+		DataResponse response	= requester.getArticles(request);
+		if(response == null){
+			bundle.putBoolean(ERROR_KEY, true);
+		} else {
+			bundle.putSerializable(RESPONSE_OBJECT_KEY, response);
+		}
+		return bundle;
+	}
+
+	private Bundle putArticle(DataRequest request){
+		Requester requester		= new Requester();
+		Bundle bundle			= new Bundle();
+		DataResponse response	= requester.putArticle(request);
+		if(response == null){
+			bundle.putBoolean(ERROR_KEY, true);
+		} else {
+			bundle.putSerializable(RESPONSE_OBJECT_KEY, response);
+		}
+		return bundle;
+	}
 
 
 	private Bundle getData(DataRequest request){
 		Requester requester = new Requester();
 		Bundle bundle = new Bundle();
-		DataResponse response = requester.getData(request);
+		DataResponse response = requester.getArticles(request);
 		if(response == null){
 			bundle.putBoolean(ERROR_KEY, true);
 		} else {

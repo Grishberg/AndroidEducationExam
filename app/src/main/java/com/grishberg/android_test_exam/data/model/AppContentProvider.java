@@ -17,8 +17,8 @@ public class AppContentProvider extends ContentProvider {
 
 	private static final String AUTHORITY = "com.grishberg.android_test_exam.content_provider";
 
-	private static final String PATH_CATEGORIES		= "categories";
-	private static final String PATH_ARTICLES		= "articles";
+	private static final String PATH_CATEGORIES		= DbHelper.TABLE_CATEGORIES;
+	private static final String PATH_ARTICLES		= DbHelper.TABLE_ARTICLES;
 
 	public static final Uri CONTENT_URI_CATEGORIES	= Uri.parse("content://" + AUTHORITY + "/" + PATH_CATEGORIES);
 	public static final Uri CONTENT_URI_ARTICLES	= Uri.parse("content://" + AUTHORITY + "/" + PATH_ARTICLES);
@@ -30,12 +30,21 @@ public class AppContentProvider extends ContentProvider {
 	private static final UriMatcher URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
 
 	static {
-		URI_MATCHER.addURI(AUTHORITY, PATH_CATEGORIES, CODE_CATEGORIES);
-		URI_MATCHER.addURI(AUTHORITY, PATH_ARTICLES, CODE_ARTICLES);
-		URI_MATCHER.addURI(AUTHORITY, PATH_ARTICLES+ "/#", CODE_ARTICLES_ID);
+		URI_MATCHER.addURI(AUTHORITY, PATH_CATEGORIES, 		CODE_CATEGORIES);
+		URI_MATCHER.addURI(AUTHORITY, PATH_ARTICLES, 		CODE_ARTICLES);
+		URI_MATCHER.addURI(AUTHORITY, PATH_ARTICLES+ "/#", 	CODE_ARTICLES_ID);
 	}
 
 	private static DbHelper dbHelper;
+
+
+	public static Uri getArticlesUri(){
+		return CONTENT_URI_ARTICLES;
+	}
+
+	public static Uri getArticlesUri(long id){
+		return Uri.parse(AppContentProvider.CONTENT_URI_ARTICLES + "/" + id);
+	}
 
 	public synchronized static DbHelper getDbHelper(Context context) {
 		if (null == dbHelper) {
@@ -53,9 +62,27 @@ public class AppContentProvider extends ContentProvider {
 
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-		String table = parseUri(uri);
-		Cursor cursor = dbHelper.getReadableDatabase()
-				.query(table, projection, selection, selectionArgs, null, null, sortOrder);
+		int uriId = URI_MATCHER.match(uri);
+		Cursor cursor = null;
+		switch (uriId) {
+			case CODE_CATEGORIES:
+				cursor = dbHelper.getReadableDatabase()
+						.query(DbHelper.TABLE_CATEGORIES, projection, selection, selectionArgs, null, null, sortOrder);
+				break;
+			case CODE_ARTICLES:
+				cursor = dbHelper.getReadableDatabase()
+						.query(DbHelper.TABLE_ARTICLES, projection, selection, selectionArgs, null, null, sortOrder);
+				break;
+			case CODE_ARTICLES_ID:
+				cursor = dbHelper.getReadableDatabase()
+						.query(DbHelper.TABLE_ARTICLES, projection
+								, DbHelper.COLUMN_ID + " = ?"
+								, new String[] { uri.getLastPathSegment() }, null, null, sortOrder);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown URI: " + uri);
+		}
+
 		cursor.setNotificationUri(getContext().getContentResolver(), uri);
 		return cursor;
 	}
@@ -70,9 +97,10 @@ public class AppContentProvider extends ContentProvider {
 		String table = parseUri(uri);
 		SQLiteDatabase db = dbHelper.getWritableDatabase();
 		long id = db.insert(table, null, values);
-		if (-1 == id) {
-			throw new RuntimeException("Record wasn't saved.");
-		}
+		//need if autoincrement
+		//if (-1 == id) {
+		//	throw new RuntimeException("Record wasn't saved.");
+		//}
 		Uri resultUri = ContentUris.withAppendedId(uri, id);
 		getContext().getContentResolver().notifyChange(resultUri, null);
 
@@ -93,13 +121,8 @@ public class AppContentProvider extends ContentProvider {
 			case CODE_ARTICLES_ID:
 				// delete by ID
 				String id	= uri.getLastPathSegment();
-				if (TextUtils.isEmpty(selection)) {
-					result = db.delete(DbHelper.TABLE_ARTICLES
-							, DbHelper.COLUMN_ID + " = " + id, selectionArgs);
-				} else {
-					result = db.delete(DbHelper.TABLE_ARTICLES
-							, DbHelper.COLUMN_ID + " = " + id + " AND " + selection, selectionArgs);
-				}
+				result = db.delete(DbHelper.TABLE_ARTICLES
+						, DbHelper.COLUMN_ID + " = ?", new String[] {id});
 				break;
 			case CODE_CATEGORIES:
 				result	= db.delete(DbHelper.TABLE_CATEGORIES,selection,selectionArgs);
@@ -116,23 +139,25 @@ public class AppContentProvider extends ContentProvider {
 		int uriId = URI_MATCHER.match(uri);
 		SQLiteDatabase db = dbHelper.getWritableDatabase();
 		switch (uriId){
+
 			case CODE_ARTICLES:
-				// delete all articles
+				// update all articles
 				result	= db.update(DbHelper.TABLE_ARTICLES, values, selection, selectionArgs);
 				break;
 
 			case CODE_ARTICLES_ID:
-				// delete by ID
+				// update by ID
 				String id	= uri.getLastPathSegment();
 				if (TextUtils.isEmpty(selection)) {
 					result = db.update(DbHelper.TABLE_ARTICLES
-							, values, DbHelper.COLUMN_ID + " = " + id, selectionArgs);
+							, values, DbHelper.COLUMN_ID + " = ?" + id, selectionArgs);
 				} else {
 					result = db.update(DbHelper.TABLE_ARTICLES
 							, values, DbHelper.COLUMN_ID + " = " + id + " AND "
 							+ selection, selectionArgs);
 				}
 				break;
+
 			case CODE_CATEGORIES:
 				result	= db.update(DbHelper.TABLE_CATEGORIES, values, selection,selectionArgs);
 				break;

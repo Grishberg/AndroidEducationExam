@@ -6,7 +6,7 @@
     <dimen name="fragment_topiclist_refresh_button_size">32dp</dimen>
     <dimen name="fragment_topiclist_search_button_size">32dp</dimen>
     <dimen name="fragment_topiclist_action_size">40dp</dimen>
-    <dimen name="fragment_topiclist_action_button_range">34dp</dimen>
+    <dimen name="fragment_topiclist_action_button_range">20dp</dimen>
 
     <dimen name="fragment_article_image_size">100dp</dimen>
 

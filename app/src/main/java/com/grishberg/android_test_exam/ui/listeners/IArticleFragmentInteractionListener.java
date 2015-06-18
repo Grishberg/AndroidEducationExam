@@ -6,5 +6,4 @@ package com.grishberg.android_test_exam.ui.listeners;
 public interface IArticleFragmentInteractionListener {
 	void onRegister(IActivityArticleInteractionListener fragment);
 	void onUnregister(IActivityArticleInteractionListener fragment);
-	void onSaveArticle(long id);
 }

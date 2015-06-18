@@ -30,6 +30,8 @@ import java.util.List;
  */
 public class RestClient {
 	private static final String TAG = "RestClient";
+	// user id = 3
+	public static final String API_KEY = "157922e9c8c383f89a3a66d6735b02af";
 
 	public RestClient() {
 	}
@@ -164,7 +166,7 @@ public class RestClient {
 	}
 
 	private void setDefaultHeaders(HttpRequestBase httpRequest) {
-//        httpRequest.setHeader("Accept", "application/json");
+        httpRequest.setHeader("Authorization", "Token token="+API_KEY);
 //        httpRequest.setHeader("Accept-Encoding", "gzip");
 //        httpRequest.setHeader("Accept-Language", language);
 	}

@@ -5,4 +5,5 @@ package com.grishberg.android_test_exam.ui.listeners;
  */
 public interface IActivityArticleInteractionListener {
 	void onOpenArticle(long id);
+	void onCreateNewArticle();
 }

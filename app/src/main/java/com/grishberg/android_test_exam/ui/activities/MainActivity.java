@@ -47,13 +47,12 @@ public class MainActivity extends Activity implements
 	}
 
 	/**
-	 * event save new article
-	 * @param id
+	 * event when user click new-article button
 	 */
 	@Override
-	public void onSaveArticle(long id) {
-		if(mTopiclistFragment != null){
-			mTopiclistFragment.onCreatedNewArticle(id);
+	public void onCreateNewArticle() {
+		if(mArticleFragment != null){
+			mArticleFragment.onCreateNewArticle();
 		}
 	}
 

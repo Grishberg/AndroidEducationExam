@@ -19,10 +19,6 @@ public class Category implements Parcelable{
 		this.title	= title;
 	}
 
-	public Category(String title){
-		this(-1, title);
-	}
-
 	public long getId() {
 		return id;
 	}
