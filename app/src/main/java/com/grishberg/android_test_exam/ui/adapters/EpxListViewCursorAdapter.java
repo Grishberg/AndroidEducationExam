@@ -55,7 +55,7 @@ public class EpxListViewCursorAdapter extends CursorTreeAdapter {
 	@Override
 	protected void bindGroupView(View view, Context context, Cursor cursor, boolean isExpanded) {
 		TextView titleTextView = (TextView) view
-				.findViewById(R.id.explistview_cell_title);
+				.findViewById(R.id.explistview_grpup_title);
 
 		if (titleTextView != null) {
 			titleTextView.setText(cursor.getString(cursor
@@ -72,6 +72,12 @@ public class EpxListViewCursorAdapter extends CursorTreeAdapter {
 
 	@Override
 	protected void bindChildView(View view, Context context, Cursor cursor, boolean isLastChild) {
+		TextView titleTextView = (TextView) view
+				.findViewById(R.id.explistview_cell_title);
 
+		if (titleTextView != null) {
+			titleTextView.setText(cursor.getString(cursor
+					.getColumnIndex(DbHelper.ARTICLES_TITLE)));
+		}
 	}
 }

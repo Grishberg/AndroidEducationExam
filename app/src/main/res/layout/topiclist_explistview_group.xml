@@ -5,9 +5,11 @@
               android:background="@color/primary_dark"
     >
 
-    <TextView android:id="@+id/explistview_cell_title"
+    <TextView android:id="@+id/explistview_grpup_title"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
-              android:textColor="@color/primary_text"/>
+              android:textColor="@color/primary_text"
+              android:layout_marginLeft="20dp"
+        />
 
 </LinearLayout>

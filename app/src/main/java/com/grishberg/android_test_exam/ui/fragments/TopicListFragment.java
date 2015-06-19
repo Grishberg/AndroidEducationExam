@@ -47,7 +47,8 @@ public class TopicListFragment extends BaseFragment
 	public static final int EXPLISTVIEW_MODE 		= 1;
 
 	public static final int ARTICLES_LOADER			= 0;
-	public static final int CATEGORIES_LOADER = 1;
+	public static final int CATEGORIES_LOADER 		= 1;
+	public static final int ARTICLES_CHILD_LOADER	= 2;
 
 	private static final String ARGS_SELECTION 				= "argsSelection";
 	private static final String ARGS_SELECTION_ARGUMENTS 	= "argsSelectionArguments";
@@ -186,7 +187,7 @@ public class TopicListFragment extends BaseFragment
 
 		//Expandable list adapter
 		mListViewExAdapter	= new EpxListViewCursorAdapter(null, getActivity(), this);
-		mListViewEx.setAdapter(mListViewCursorAdapter);
+		mListViewEx.setAdapter(mListViewExAdapter);
 		getLoaderManager().initLoader(ARTICLES_LOADER, null, this);
 		getLoaderManager().initLoader(CATEGORIES_LOADER, null, this);
 		//	2) load articles from server
@@ -276,7 +277,7 @@ public class TopicListFragment extends BaseFragment
 	@Override
 	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
-		if (id <= CATEGORIES_LOADER) {
+		if (id < ARTICLES_CHILD_LOADER) {
 			switch (id) {
 				case ARTICLES_LOADER:
 					// filter items
@@ -334,7 +335,7 @@ public class TopicListFragment extends BaseFragment
 
 	@Override
 	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-		if(loader.getId() <= CATEGORIES_LOADER) {
+		if(loader.getId() < ARTICLES_CHILD_LOADER) {
 			switch (loader.getId()){
 				case ARTICLES_LOADER:
 					mListViewCursorAdapter.swapCursor(data);
@@ -345,6 +346,7 @@ public class TopicListFragment extends BaseFragment
 			}
 		} else {
 			// child cursor
+			mListViewExAdapter.setChildrenCursor(loader.getId() - ARTICLES_CHILD_LOADER, data);
 
 		}
 	}
@@ -377,12 +379,12 @@ public class TopicListFragment extends BaseFragment
 	//start or restart loader from adapter
 	@Override
 	public void getChildrenCursor(int loaderId) {
-		Loader loader = getLoaderManager().getLoader(loaderId);
+		Loader loader = getLoaderManager().getLoader(ARTICLES_CHILD_LOADER+loaderId);
 		if (loader != null && !loader.isReset()) {
-			getLoaderManager().restartLoader(loaderId, null,
+			getLoaderManager().restartLoader(ARTICLES_CHILD_LOADER+loaderId, null,
 					this);
 		} else {
-			getLoaderManager().initLoader(loaderId, null,
+			getLoaderManager().initLoader(ARTICLES_CHILD_LOADER+loaderId, null,
 					this);
 		}
 	}
