@@ -29,6 +29,7 @@ import com.grishberg.android_test_exam.data.api.ApiServiceHelper;
 import com.grishberg.android_test_exam.data.api.request.DataRequest;
 import com.grishberg.android_test_exam.data.api.response.DataResponse;
 import com.grishberg.android_test_exam.data.containers.Article;
+import com.grishberg.android_test_exam.data.containers.ArticleRequestContainer;
 import com.grishberg.android_test_exam.data.containers.Category;
 import com.grishberg.android_test_exam.data.model.AppContentProvider;
 import com.grishberg.android_test_exam.data.model.DbHelper;
@@ -156,7 +157,6 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 
 		// set projection
 		mArticlesProjection = new String[] {DbHelper.COLUMN_ID
-				, DbHelper.ARTICLES_SERVER_ID
 				, DbHelper.ARTICLES_CATEGORY_ID
 				, DbHelper.ARTICLES_TITLE
 				, DbHelper.ARTICLES_DESCRIPTION
@@ -229,8 +229,9 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 	}
 
 	private void onEditModeButtonClicked(){
-		mTitleEdit.setEnabled(false);
-		mDescriptionEdit.setEnabled(false);
+		mTitleEdit.setEnabled(true);
+		mDescriptionEdit.setEnabled(true
+		);
 		mSaveButton.setVisibility(View.VISIBLE);
 		mIsPublishedSwitch.setEnabled(true);
 		mEditButton.setEnabled(false);
@@ -242,62 +243,53 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 	 */
 	private void onSavePressed(){
 		// 1) save to server
-
 		// 2) get result's idFromServer
 		// 3) save to DB
-		long idFromServer	= 0;
 		String title		=  mTitleEdit.getText().toString();
 		String description	= mDescriptionEdit.getText().toString();
 		long updated		= (new Date()).getTime();
 		long categoryId		= mCategories.get(mSpinner.getSelectedItemPosition()).getId();
 		if (mCreatedDate == 0) mCreatedDate = updated;
-		boolean isPublished	= mIsPublishedSwitch.isChecked();
-
-		Article article 	= new Article(-1,title, description, "", false, categoryId
-				, 0,0,true);
-		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-		ApiServiceHelper.getInstance().putArticle(gson.toJson(article), new ResultReceiver(new Handler()) {
-			@Override
-			protected void onReceiveResult(int resultCode, Bundle resultData) {
-				if (resultData.containsKey(ApiService.ERROR_KEY)) {
-					getCategoriesFromDb();
-				} else {
-					DataResponse response = (DataResponse) resultData
-							.getSerializable(ApiService.RESPONSE_OBJECT_KEY);
-					// categories received from server, get it from content provider
-					getCategoriesFromDb();
-				}
-			}
-		});
-		// only save if title or description
-		// is available
 
 		if (description.length() == 0 || title.length() == 0) {
 			return;
 		}
 
-		ContentValues values = new ContentValues();
-		values.put(DbHelper.ARTICLES_SERVER_ID, 	idFromServer);
-		values.put(DbHelper.ARTICLES_TITLE, 		title);
-		values.put(DbHelper.ARTICLES_DESCRIPTION, 	description);
-		values.put(DbHelper.ARTICLES_CATEGORY_ID, 	categoryId);
-		values.put(DbHelper.ARTICLES_PUBLISHED, 	isPublished);
-		values.put(DbHelper.ARTICLES_CREATED, 		mCreatedDate);
-		values.put(DbHelper.ARTICLES_UPDATED, 		updated);
-		values.put(DbHelper.ARTICLES_OWN,			true);
+		Article article 	= new Article(-1,title, description, "", true, categoryId
+				, 0,0,true);
 
-
-		if (mArticleUri == null) {
-			// New todo
-			mArticleUri = AppController.getAppContext().getContentResolver()
-					.insert(AppContentProvider.CONTENT_URI_ARTICLES, values);
+		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		String jsonContent	= gson.toJson(new ArticleRequestContainer(article));
+		if( mArticleUri == null) {
+			// add new article
+			ApiServiceHelper.getInstance().putArticle(new DataRequest(jsonContent)
+					, new ResultReceiver(new Handler()) {
+				@Override
+				protected void onReceiveResult(int resultCode, Bundle resultData) {
+					if (resultData.containsKey(ApiService.ERROR_KEY)) {
+					} else {
+						DataResponse response = (DataResponse) resultData
+								.getSerializable(ApiService.RESPONSE_OBJECT_KEY);
+					}
+				}
+			});
 		} else {
-			// Update todo
-			AppController.getAppContext().getContentResolver()
-					.update(mArticleUri, values, null, null);
-		}
+			// edit my article
+			ApiServiceHelper.getInstance().editArticle(new DataRequest(mArticleUri.getLastPathSegment()
+					, jsonContent), new ResultReceiver(new Handler()) {
+				@Override
+				protected void onReceiveResult(int resultCode, Bundle resultData) {
+					if (resultData.containsKey(ApiService.ERROR_KEY)) {
+						getCategoriesFromDb();
+					} else {
+						DataResponse response = (DataResponse) resultData
+								.getSerializable(ApiService.RESPONSE_OBJECT_KEY);
+						// update in db
+					}
+				}
+			});
 
-		// 2) send to server
+		}
 	}
 
 	// user create new article
@@ -309,6 +301,8 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 		mDescriptionEdit.setText("");
 		mSpinner.setSelection(0);
 		mIsPublishedSwitch.setChecked(false);
+		onEditModeButtonClicked();
+
 	}
 
 	@Override

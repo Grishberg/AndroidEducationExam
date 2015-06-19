@@ -37,15 +37,19 @@ public class ApiServiceHelper {
 		startService(data, ApiService.ACTION_GET_ARTICLES, onServiceResult);
 	}
 
-	public void putArticle(String data, ResultReceiver onServiceResult){
+	public void putArticle(DataRequest data, ResultReceiver onServiceResult){
 		startService(data, ApiService.ACTION_PUT_ARTICLE, onServiceResult);
+	}
+
+	public void editArticle(DataRequest data, ResultReceiver onServiceResult){
+		startService(data, ApiService.ACTION_EDIT_ARTICLE, onServiceResult);
 	}
 
 	 /*
     utils
      */
 
-	private void startService(Serializable data, int action, ResultReceiver onServiceResult) {
+	private void startService(Parcelable data, int action, ResultReceiver onServiceResult) {
 		Intent intent = getIntent(action, onServiceResult);
 		if(data != null){
 			intent.putExtra(ApiService.REQUEST_OBJECT_KEY, data);

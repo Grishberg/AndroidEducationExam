@@ -167,6 +167,8 @@ public class RestClient {
 
 	private void setDefaultHeaders(HttpRequestBase httpRequest) {
         httpRequest.setHeader("Authorization", "Token token="+API_KEY);
+		httpRequest.setHeader("Content-Type", "Content-Type");
+
 //        httpRequest.setHeader("Accept-Encoding", "gzip");
 //        httpRequest.setHeader("Accept-Language", language);
 	}

@@ -26,6 +26,7 @@ public class ApiService extends IntentService {
 	public static final int ACTION_GET_CATEGORIES	= 1;
 	public static final int ACTION_GET_ARTICLES		= 2;
 	public static final int ACTION_PUT_ARTICLE		= 3;
+	public static final int ACTION_EDIT_ARTICLE		= 4;
 
 
 
@@ -57,7 +58,9 @@ public class ApiService extends IntentService {
 			case ACTION_GET_ARTICLES:
 				return getArticles((DataRequest) getRequestObject(intent));
 			case ACTION_PUT_ARTICLE:
-				return put((DataRequest) getRequestObject(intent));
+				return putArticle((DataRequest) getRequestObject(intent));
+			case ACTION_EDIT_ARTICLE:
+				return editArticle((DataRequest) getRequestObject(intent));
 
 
 		}
@@ -71,7 +74,7 @@ public class ApiService extends IntentService {
 		if(response == null){
 			bundle.putBoolean(ERROR_KEY, true);
 		} else {
-			bundle.putSerializable(RESPONSE_OBJECT_KEY, response);
+			bundle.putParcelable(RESPONSE_OBJECT_KEY, response);
 		}
 		return bundle;
 	}
@@ -83,7 +86,7 @@ public class ApiService extends IntentService {
 		if(response == null){
 			bundle.putBoolean(ERROR_KEY, true);
 		} else {
-			bundle.putSerializable(RESPONSE_OBJECT_KEY, response);
+			bundle.putParcelable(RESPONSE_OBJECT_KEY, response);
 		}
 		return bundle;
 	}
@@ -95,11 +98,22 @@ public class ApiService extends IntentService {
 		if(response == null){
 			bundle.putBoolean(ERROR_KEY, true);
 		} else {
-			bundle.putSerializable(RESPONSE_OBJECT_KEY, response);
+			bundle.putParcelable(RESPONSE_OBJECT_KEY, response);
 		}
 		return bundle;
 	}
 
+	private Bundle editArticle(DataRequest request){
+		Requester requester		= new Requester();
+		Bundle bundle			= new Bundle();
+		DataResponse response	= requester.editArticle(request);
+		if(response == null){
+			bundle.putBoolean(ERROR_KEY, true);
+		} else {
+			bundle.putParcelable(RESPONSE_OBJECT_KEY, response);
+		}
+		return bundle;
+	}
 
 	private Bundle getData(DataRequest request){
 		Requester requester = new Requester();
@@ -108,12 +122,10 @@ public class ApiService extends IntentService {
 		if(response == null){
 			bundle.putBoolean(ERROR_KEY, true);
 		} else {
-			bundle.putSerializable(RESPONSE_OBJECT_KEY, response);
+			bundle.putParcelable(RESPONSE_OBJECT_KEY, response);
 		}
 		return bundle;
 	}
-
-
 
 	private Parcelable getRequestObject(Intent intent){
 		return intent.getParcelableExtra(REQUEST_OBJECT_KEY);

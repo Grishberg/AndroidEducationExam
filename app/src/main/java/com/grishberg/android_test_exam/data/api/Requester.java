@@ -13,7 +13,10 @@ import com.grishberg.android_test_exam.data.containers.Category;
 import com.grishberg.android_test_exam.data.model.AppContentProvider;
 
 import org.apache.http.NameValuePair;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicNameValuePair;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
@@ -83,12 +86,56 @@ public class Requester {
 	}
 
 	public DataResponse putArticle(DataRequest request) {
+		long id	= -1;
 		ArticleContainer articleContainer = null;
 		//TODO:start volley
 		RestClient restClient = new RestClient();
 		String url = putArticleUrl();
-		ArrayList<NameValuePair> params = new ArrayList<>();
-		ApiResponse response = restClient.doPost(url,new ArrayList<NameValuePair>());
+		//ArrayList<NameValuePair> params = new ArrayList<>();
+		//params.add(new BasicNameValuePair("body", request));
+		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss Z").create();
+		StringEntity stringEntity	= null;
+		try
+		{
+			stringEntity = new StringEntity(request.getData());
+		} catch (Exception e) {
+
+		}
+		ApiResponse response = restClient.doPost(url, null, stringEntity);
+
+		if(response != null){
+			try {
+				String res = response.getAsText();
+
+//				articleContainer = gson.fromJson(response.getInputStreamReader()
+//						, ArticleContainer.class);
+			} catch (Exception e){
+				e.printStackTrace();
+				return null;
+			}
+		}
+
+		if(articleContainer != null){
+			//TODO: insert into db
+			id	= articleContainer.article.getId();
+			Log.d(TAG, "article succesful sended");
+		}
+
+		return new DataResponse(id);
+	}
+
+
+	public DataResponse editArticle(DataRequest request) {
+		ArticleContainer articleContainer = null;
+		//TODO:start volley
+		RestClient restClient = new RestClient();
+		String url = editArticleUrl(request.getId());
+		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss Z").create();
+		StringEntity stringEntity	= null;
+		try {
+			stringEntity = new StringEntity(request.getData());
+		} catch (Exception e) { }
+		ApiResponse response = restClient.doPut(url, stringEntity);
 
 		if(response != null){
 			try {
@@ -101,13 +148,12 @@ public class Requester {
 		}
 
 		if(articleContainer != null){
-			Log.d(TAG, "article succesful sended");
+			//TODO update in db
+			Log.d(TAG, "article succesful edited");
 		}
 
 		return new DataResponse();
 	}
-
-
 	private String getCategoriesUrl(){
 		return SERVER + "categories.json";
 	}
@@ -120,8 +166,8 @@ public class Requester {
 		return SERVER + "articles.json";
 	}
 
-	private String editArticleUrl(long id){
-		return SERVER + String.format("articles/%d.json",id);
+	private String editArticleUrl(String id){
+		return SERVER + String.format("articles/%s.json",id);
 	}
 
 

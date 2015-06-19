@@ -12,18 +12,18 @@ import java.util.Date;
  * Created by grigoriy on 16.06.15.
  */
 public class Article {
-	@Expose
 	private long			id;
+	@Expose
 	private String			title;
+	@Expose
 	private String			description;
 	private PhotoContainer	photo;
+	@Expose
 	private boolean 		published;
+	@Expose
 	private long			category_id;
-	@Expose
 	private Date			created_at;
-	@Expose
 	private Date			updated_at;
-	@Expose
 	private boolean			own;
 
 	public Article(long id
@@ -62,7 +62,6 @@ public class Article {
 
 	public static Article fromCursor(Cursor c){
 		int idColId				= c.getColumnIndex(DbHelper.COLUMN_ID);
-		int serverIdColId		= c.getColumnIndex(DbHelper.ARTICLES_SERVER_ID);
 		int titleColId			= c.getColumnIndex(DbHelper.ARTICLES_TITLE);
 		int descriptionColId	= c.getColumnIndex(DbHelper.ARTICLES_DESCRIPTION);
 		int photoUrlColId		= c.getColumnIndex(DbHelper.ARTICLES_PHOTO_URL);
@@ -74,7 +73,6 @@ public class Article {
 
 		return new Article(
 				c.getLong(idColId),
-				c.getLong(serverIdColId),
 				c.getString(titleColId),
 				c.getString(descriptionColId),
 				c.getString(photoUrlColId),
@@ -87,6 +85,10 @@ public class Article {
 	}
 
 	// getters
+
+	public long getId() {
+		return id;
+	}
 
 	public String getTitle() {
 		return title;
