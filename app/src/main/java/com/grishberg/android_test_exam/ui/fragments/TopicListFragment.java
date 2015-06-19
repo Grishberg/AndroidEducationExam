@@ -9,6 +9,7 @@ import android.app.LoaderManager;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
@@ -35,6 +36,7 @@ import com.grishberg.android_test_exam.ui.listeners.ITopicListFragmentInteractio
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class TopicListFragment extends BaseFragment
 		implements IActivityTopicListInteractionListener
@@ -43,6 +45,7 @@ public class TopicListFragment extends BaseFragment
 , CompoundButton.OnCheckedChangeListener
 , IActivityAdapterInteraction {
 
+	private static final String TAG = "TopicListFragment";
 	public static final int LISTVIEW_MODE 			= 0;
 	public static final int EXPLISTVIEW_MODE 		= 1;
 
@@ -52,6 +55,9 @@ public class TopicListFragment extends BaseFragment
 
 	private static final String ARGS_SELECTION 				= "argsSelection";
 	private static final String ARGS_SELECTION_ARGUMENTS 	= "argsSelectionArguments";
+
+	private static final String ARGS_ARTICLES_SELECTION 	= "argsArticlesSelection";
+	private static final String ARGS_ARTICLES_SELECTION_ARGUMENTS 	= "argsArticlesSelectionArguments";
 
 	private ListView 						mListView;
 	private ExpandableListView 				mListViewEx;
@@ -318,8 +324,8 @@ public class TopicListFragment extends BaseFragment
 			String selection = null;
 			String[] selectionArgs = null;
 			if (args != null) {
-				selection = args.getString(ARGS_SELECTION);
-				selectionArgs = args.getStringArray(ARGS_SELECTION_ARGUMENTS);
+				selection = args.getString(ARGS_ARTICLES_SELECTION);
+				selectionArgs = args.getStringArray(ARGS_ARTICLES_SELECTION_ARGUMENTS);
 			}
 
 			// Returns a new CursorLoader
@@ -347,8 +353,13 @@ public class TopicListFragment extends BaseFragment
 			}
 		} else {
 			// child cursor
-			mListViewExAdapter.setChildrenCursor(loader.getId() - ARTICLES_CHILD_LOADER, data);
-
+			Map<Long, Integer> groupMap	= mListViewExAdapter.getGroupMap();
+			Integer groupIndex	= groupMap.get((long)(loader.getId() - ARTICLES_CHILD_LOADER));
+			if(groupIndex != null) {
+				mListViewExAdapter.setChildrenCursor(groupIndex, data);
+			} else  {
+				Log.d(TAG,"groupMap = null, id="+loader.getId());
+			}
 		}
 	}
 
@@ -379,13 +390,17 @@ public class TopicListFragment extends BaseFragment
 
 	//start or restart loader from adapter
 	@Override
-	public void getChildrenCursor(int loaderId) {
-		Loader loader = getLoaderManager().getLoader(ARTICLES_CHILD_LOADER+loaderId);
+	public void getChildrenCursor(long categoryId) {
+		Loader loader	= getLoaderManager().getLoader(ARTICLES_CHILD_LOADER+(int)categoryId);
+		Bundle args		= new Bundle();
+		args.putString(ARGS_ARTICLES_SELECTION , DbHelper.ARTICLES_CATEGORY_ID+" = ?");
+		args.putStringArray(ARGS_ARTICLES_SELECTION_ARGUMENTS, new String[]{ String.format("%d",categoryId)})
+		;
 		if (loader != null && !loader.isReset()) {
-			getLoaderManager().restartLoader(ARTICLES_CHILD_LOADER+loaderId, null,
+			getLoaderManager().restartLoader(ARTICLES_CHILD_LOADER+(int)categoryId, args,
 					this);
 		} else {
-			getLoaderManager().initLoader(ARTICLES_CHILD_LOADER+loaderId, null,
+			getLoaderManager().initLoader(ARTICLES_CHILD_LOADER+(int)categoryId, args,
 					this);
 		}
 	}

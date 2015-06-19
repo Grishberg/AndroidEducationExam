@@ -13,33 +13,35 @@ import com.grishberg.android_test_exam.data.model.DbHelper;
 import com.grishberg.android_test_exam.ui.listeners.IActivityAdapterInteraction;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by G on 16.06.15.
  */
 public class EpxListViewCursorAdapter extends CursorTreeAdapter {
 
-	protected final HashMap<Integer, Integer> mGroupMap;
+	protected final HashMap<Long, Integer> mGroupMap;
 	private LayoutInflater mInflater;
 	private IActivityAdapterInteraction mListener;
 
 	public EpxListViewCursorAdapter(Cursor cursor,Context context, IActivityAdapterInteraction listener){
 		super(cursor, context);
 		mInflater	= LayoutInflater.from(context);
-		mGroupMap	= new HashMap<Integer, Integer>();
+		mGroupMap	= new HashMap<Long, Integer>();
 		mListener	= listener;
 	}
+
 	@Override
 	protected Cursor getChildrenCursor(Cursor groupCursor) {
 		// Given the group, we return a cursor for all the children within that
 		// group
 		int groupPos = groupCursor.getPosition();
-		int groupId = groupCursor.getInt(groupCursor
+		long groupId = groupCursor.getLong(groupCursor
 				.getColumnIndex(DbHelper.COLUMN_ID));
 
 		mGroupMap.put(groupId, groupPos);
 
-		if(mListener != null ){
+		if(mListener != null ) {
 			mListener.getChildrenCursor(groupId);
 		}
 
@@ -79,5 +81,9 @@ public class EpxListViewCursorAdapter extends CursorTreeAdapter {
 			titleTextView.setText(cursor.getString(cursor
 					.getColumnIndex(DbHelper.ARTICLES_TITLE)));
 		}
+	}
+
+	public Map<Long, Integer> getGroupMap(){
+		return mGroupMap;
 	}
 }
