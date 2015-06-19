@@ -4,13 +4,10 @@ import android.app.Activity;
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.app.LoaderManager;
-import android.os.Handler;
-import android.os.ResultReceiver;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -29,33 +26,48 @@ import android.widget.Spinner;
 import android.widget.Switch;
 
 import com.grishberg.android_test_exam.R;
-import com.grishberg.android_test_exam.data.api.ApiService;
-import com.grishberg.android_test_exam.data.api.ApiServiceHelper;
-import com.grishberg.android_test_exam.data.api.request.DataRequest;
-import com.grishberg.android_test_exam.data.api.response.DataResponse;
 import com.grishberg.android_test_exam.data.model.AppContentProvider;
 import com.grishberg.android_test_exam.data.model.DbHelper;
 import com.grishberg.android_test_exam.ui.adapters.EpxListViewCursorAdapter;
-import com.grishberg.android_test_exam.ui.adapters.ListViewCursorAdapter;
+import com.grishberg.android_test_exam.ui.listeners.IActivityAdapterInteraction;
 import com.grishberg.android_test_exam.ui.listeners.IActivityTopicListInteractionListener;
 import com.grishberg.android_test_exam.ui.listeners.ITopicListFragmentInteraction;
 
-public class TopicListFragment extends Fragment implements IActivityTopicListInteractionListener
+import java.util.ArrayList;
+import java.util.List;
+
+public class TopicListFragment extends BaseFragment
+		implements IActivityTopicListInteractionListener
 , LoaderManager.LoaderCallbacks<Cursor>
 , AdapterView.OnItemSelectedListener
-, CompoundButton.OnCheckedChangeListener{
+, CompoundButton.OnCheckedChangeListener
+, IActivityAdapterInteraction {
 
-	public static final int LISTVIEW_MODE = 0;
-	public static final int EXPLISTVIEW_MODE = 1;
+	public static final int LISTVIEW_MODE 			= 0;
+	public static final int EXPLISTVIEW_MODE 		= 1;
 
-	public static final int ARTICLES_LOADER = 0;
-	private ListView mListView;
-	private ExpandableListView mListViewEx;
-	private ITopicListFragmentInteraction mListener;
-	private SimpleCursorAdapter mListViewCursorAdapter;
-	private boolean mFilterOnlyMy;
-	private boolean mFilterUnpublished;
-	String[] mProjection;
+	public static final int ARTICLES_LOADER			= 0;
+	public static final int CATEGORIES_LOADER = 1;
+
+	private static final String ARGS_SELECTION 				= "argsSelection";
+	private static final String ARGS_SELECTION_ARGUMENTS 	= "argsSelectionArguments";
+
+	private ListView 						mListView;
+	private ExpandableListView 				mListViewEx;
+	private ITopicListFragmentInteraction 	mListener;
+	private SimpleCursorAdapter 			mListViewCursorAdapter;
+	private EpxListViewCursorAdapter		mListViewExAdapter;
+
+	private boolean 						mFilterOnlyMy;
+	private boolean 						mFilterUnpublished;
+	private String							mKeyword;
+
+	// DB cursor settings
+	String[] 								mProjection;
+	String[]								mCategoryProjection;
+	private String 							mArticlesSortOrder;
+	private String 							mCategoriesSortOrder;
+	private String							mChildArticlesSortOrder;
 
 	public static TopicListFragment newInstance() {
 		TopicListFragment fragment = new TopicListFragment();
@@ -134,7 +146,12 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 			}
 		});
 		// set projection
-		mProjection = new String[] {DbHelper.COLUMN_ID, DbHelper.ARTICLES_TITLE};
+		mProjection				= new String[] {DbHelper.COLUMN_ID, DbHelper.ARTICLES_TITLE};
+		mCategoryProjection		= new String[] {DbHelper.COLUMN_ID, DbHelper.CATEGORIES_TITLE};
+		mArticlesSortOrder		= DbHelper.ARTICLES_UPDATED + " DESC ";
+		mCategoriesSortOrder	= DbHelper.CATEGORIES_TITLE + " ASC ";
+		mChildArticlesSortOrder	= DbHelper.ARTICLES_UPDATED	+ " DESC ";
+
 		fillData();
 		return view;
 	}
@@ -163,31 +180,25 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 		// Fields on the UI to which we map
 		int[] to = new int[] { R.id.listview_cell_title };
 
-		getLoaderManager().initLoader(ARTICLES_LOADER, null, this);
 		mListViewCursorAdapter = new SimpleCursorAdapter(getActivity(), R.layout.topiclist_listview_cell
 				, null, from, to, 0);
 		mListView.setAdapter(mListViewCursorAdapter);
 
+		//Expandable list adapter
+		mListViewExAdapter	= new EpxListViewCursorAdapter(null, getActivity(), this);
+		mListViewEx.setAdapter(mListViewCursorAdapter);
+		getLoaderManager().initLoader(ARTICLES_LOADER, null, this);
+		getLoaderManager().initLoader(CATEGORIES_LOADER, null, this);
 		//	2) load articles from server
-		ApiServiceHelper.getInstance().getArticles(new DataRequest(), new ResultReceiver(new Handler()) {
-			@Override
-			protected void onReceiveResult(int resultCode, Bundle resultData) {
-				if (resultData.containsKey(ApiService.ERROR_KEY)) {
+		getArticlesRequest(null, null);
 
-				} else {
-					DataResponse response = (DataResponse) resultData
-							.getSerializable(ApiService.RESPONSE_OBJECT_KEY);
-					// categories received from server, get it from content provider
-				}
-			}
-		});
 	}
 
 	/**
 	 * refresh list
 	 */
 	private void onRefresh(){
-		getActivity().getLoaderManager().initLoader(ARTICLES_LOADER, null, this).forceLoad();
+		getArticlesRequest(null, null);
 	}
 
 	private void onAddNewArticle(){
@@ -213,37 +224,128 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 				mFilterUnpublished	= isChecked;
 				break;
 		}
-		//TODO: init filter
+		initFilter();
 	}
 
 	private void filterTextChanged(String keyword){
-		//TODO: init filter
+		mKeyword			= keyword;
+		initFilter();
+	}
+
+	/**
+	 * setup filter and init query from DB
+	 */
+	private void initFilter(){
+
+		List<String> selectionArgs		= new ArrayList<>();
+		StringBuilder filterSelection	= new StringBuilder();
+		if(mFilterOnlyMy) {
+			filterSelection.append(DbHelper.ARTICLES_OWN);
+			filterSelection.append("= ? ");
+			selectionArgs.add("1");
+		}
+		if(mFilterUnpublished) {
+			if(filterSelection.length() > 0){
+				filterSelection.append( " AND " );
+			}
+			filterSelection.append(DbHelper.ARTICLES_PUBLISHED);
+			filterSelection.append("= ?");
+			selectionArgs.add("1");
+		}
+		if(!TextUtils.isEmpty(mKeyword)) {
+			if(filterSelection.length() > 0){
+				filterSelection.append( " AND " );
+			}
+			filterSelection.append( DbHelper.ARTICLES_TITLE);
+			filterSelection.append( " LIKE ?");
+			selectionArgs.add( mKeyword + "%");
+
+		}
+
+		Bundle args = null;
+		if(filterSelection.length() > 0) {
+			args	= new Bundle();
+			args.putString(ARGS_SELECTION, filterSelection.toString());
+			args.putStringArray(ARGS_SELECTION_ARGUMENTS
+					, selectionArgs.toArray(new String[selectionArgs.size()]));
+		}
+
+		getLoaderManager().restartLoader(ARTICLES_LOADER, args, this);
 	}
 
 	@Override
 	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
-		switch (id) {
-			case ARTICLES_LOADER:
-				// Returns a new CursorLoader
-				return new CursorLoader(
-						getActivity(),   // Parent activity context
-						AppContentProvider.CONTENT_URI_ARTICLES, // Table to query
-						mProjection,     // Projection to return
-						null,            // No selection clause
-						null,            // No selection arguments
-						null             // Default sort order
-				);
-			default:
-				// An invalid id was passed in
-				return null;
+		if (id <= CATEGORIES_LOADER) {
+			switch (id) {
+				case ARTICLES_LOADER:
+					// filter items
+					String selection = null;
+					String[] selectionArgs = null;
+					if (args != null) {
+						selection = args.getString(ARGS_SELECTION);
+						selectionArgs = args.getStringArray(ARGS_SELECTION_ARGUMENTS);
+					}
+
+					// Returns a new CursorLoader
+					return new CursorLoader(
+							getActivity(),   // Parent activity context
+							AppContentProvider.CONTENT_URI_ARTICLES, // Table to query
+							mProjection,     // Projection to return
+							selection,            // No selection clause
+							selectionArgs,            // No selection arguments
+							mArticlesSortOrder             // Default sort order
+					);
+				case CATEGORIES_LOADER:
+					// Returns a new CursorLoader
+					return new CursorLoader(
+							getActivity(),   // Parent activity context
+							AppContentProvider.CONTENT_URI_CATEGORIES, // Table to query
+							mCategoryProjection,     // Projection to return
+							null,            // No selection clause
+							null,            // No selection arguments
+							mCategoriesSortOrder  // Default sort order
+					);
+				default:
+					// An invalid id was passed in
+					return null;
+			}
+		} else {
+			// child loaders
+			// filter items
+			String selection = null;
+			String[] selectionArgs = null;
+			if (args != null) {
+				selection = args.getString(ARGS_SELECTION);
+				selectionArgs = args.getStringArray(ARGS_SELECTION_ARGUMENTS);
+			}
+
+			// Returns a new CursorLoader
+			return new CursorLoader(
+					getActivity(),   // Parent activity context
+					AppContentProvider.CONTENT_URI_ARTICLES, // Table to query
+					mProjection,     // Projection to return
+					selection,            // No selection clause
+					selectionArgs,            // No selection arguments
+					mChildArticlesSortOrder             // Default sort order
+			);
 		}
 	}
 
 	@Override
 	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-		if(loader.getId() == ARTICLES_LOADER) {
-			mListViewCursorAdapter.swapCursor(data);
+		if(loader.getId() <= CATEGORIES_LOADER) {
+			switch (loader.getId()){
+				case ARTICLES_LOADER:
+					mListViewCursorAdapter.swapCursor(data);
+					break;
+				case CATEGORIES_LOADER:
+					mListViewExAdapter.setGroupCursor(data);
+					break;
+			}
+		} else {
+			// child cursor
+
 		}
 	}
 
@@ -253,15 +355,6 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 			mListViewCursorAdapter.changeCursor(null);
 		}
 
-	}
-
-	/**
-	 * new article was created, need to refresh
-	 * @param id
-	 */
-	@Override
-	public void onCreatedNewArticle(long id) {
-		//TODO: refresh list
 	}
 
 	// spinner listview type changed
@@ -278,7 +371,20 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 				mListViewEx.setVisibility(View.VISIBLE);
 				break;
 		}
-		//TODO: save
+		//TODO: save state of selected article(id)
+	}
+
+	//start or restart loader from adapter
+	@Override
+	public void getChildrenCursor(int loaderId) {
+		Loader loader = getLoaderManager().getLoader(loaderId);
+		if (loader != null && !loader.isReset()) {
+			getLoaderManager().restartLoader(loaderId, null,
+					this);
+		} else {
+			getLoaderManager().initLoader(loaderId, null,
+					this);
+		}
 	}
 
 	//------------------- context menu ----------------------
@@ -302,8 +408,7 @@ public class TopicListFragment extends Fragment implements IActivityTopicListInt
 			case R.id.action_delete_listview:
 				AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item
 						.getMenuInfo();
-				Uri uri = AppContentProvider.getArticlesUri( info.id );
-				getActivity().getContentResolver().delete(uri, null, null);
+				deleteArticleRequest(info.id, null, null);
 				return true;
 
 			case R.id.action_delete_listviewex:

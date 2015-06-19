@@ -17,14 +17,20 @@ import java.util.Map;
  * Created by grigoriy on 18.06.15.
  */
 public class GsonRequest<T> extends Request<T> {
+	/** Charset for request. */
+	private static final String PROTOCOL_CHARSET = "utf-8";
+
 	private final Gson gson = new Gson();
 	private final Class<T> clazz;
 	private final Map<String, String> headers;
 	private final Response.Listener<T> listener;
+	private final String mRequestBody;
 
-	public GsonRequest(String url, Class<T> classType, Map<String, String> headers,
-					   Response.Listener<T> listener, Response.ErrorListener errorListener) {
-		super(Method.GET, url, errorListener);
+	public GsonRequest(int method, String url,String requestBody, Class<T> classType
+			, Map<String, String> headers
+			, Response.Listener<T> listener, Response.ErrorListener errorListener) {
+		super(method, url, errorListener);
+		mRequestBody	= requestBody;
 		this.clazz = classType;
 		this.headers = headers;
 		this.listener = listener;
@@ -34,6 +40,7 @@ public class GsonRequest<T> extends Request<T> {
 					   Response.Listener<T> listener, Response.ErrorListener errorListener) {
 		super(Method.GET, url, errorListener);
 		headers = null;
+		mRequestBody	= null;
 		this.clazz = classType;
 		this.listener = listener;
 	}
@@ -59,5 +66,17 @@ public class GsonRequest<T> extends Request<T> {
 		} catch (JsonSyntaxException e) {
 			return Response.error(new ParseError(e));
 		}
+	}
+
+	@Override
+	public byte[] getBody() throws AuthFailureError {
+		byte[] body = null;
+		try {
+			body	= mRequestBody.getBytes(PROTOCOL_CHARSET);
+		} catch (UnsupportedEncodingException e){
+
+		}
+
+		return body;
 	}
 }

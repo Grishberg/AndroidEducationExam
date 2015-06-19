@@ -36,16 +36,19 @@ import com.grishberg.android_test_exam.data.model.DbHelper;
 import com.grishberg.android_test_exam.ui.listeners.IActivityArticleInteractionListener;
 import com.grishberg.android_test_exam.ui.listeners.IArticleFragmentInteractionListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Date;
 
-public class ArticlesFragment extends Fragment implements IActivityArticleInteractionListener
+public class ArticlesFragment extends BaseFragment implements IActivityArticleInteractionListener
 		, LoaderManager.LoaderCallbacks<Cursor>{
 
-	private static final int GET_CURRENT_ARTICLE_LOADER = 1;
-	private static final int GET_CATEGORIES_LOADER 		= 2;
+	private static final int GET_CURRENT_ARTICLE_LOADER 	= 1;
+	private static final int GET_CATEGORIES_LOADER 			= 2;
 
-	private static final String PARAM_ARTICLE_ID = "paramArticleId";
+	private static final String PARAM_ARTICLE_ID 			= "paramArticleId";
 	private static final String STATE_ARTICLE_ID			= "stateArticleId";
 	private static final String STATE_ARTICLE_TITLE			= "stateArticleTilte";
 	private static final String STATE_ARTICLE_DESCRIPTION	= "stateArticleDescription";
@@ -55,13 +58,11 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 
 
 	private IArticleFragmentInteractionListener mListener;
-	private boolean mIsEditMode;
-	private long mArticleId;
-	private long mCreatedDate;
+	private long 				mArticleId;
+	private long 				mCreatedDate;
 	private ArrayList<Category> mCategories;
-	private Uri mArticleUri;
-	String[] mArticlesProjection;
-	String[] mCategoriesProjection;
+	String[] 					mArticlesProjection;
+	String[] 					mCategoriesProjection;
 
 	// controls
 	private EditText 	mTitleEdit;
@@ -173,22 +174,26 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 
 		return view;
 	}
-	//TODO: get from server
+
+	private void getCategoriesFromDb(){
+		getActivity().getLoaderManager().restartLoader(GET_CATEGORIES_LOADER, null, this);
+	}
+
+	/**
+	 * get categories from server
+	 */
 	private void getCategories(){
 
-		ApiServiceHelper.getInstance().getCategories(new DataRequest(), new ResultReceiver(new Handler()) {
+		// 1) get from DB
+		getActivity().getLoaderManager().initLoader(GET_CATEGORIES_LOADER, null, this);
+
+		// 2) send request to server
+		getCategoriesRequest(new IResponseListener() {
 			@Override
-			protected void onReceiveResult(int resultCode, Bundle resultData) {
-				if (resultData.containsKey(ApiService.ERROR_KEY)) {
-					getCategoriesFromDb();
-				} else {
-					DataResponse response = (DataResponse) resultData
-							.getSerializable(ApiService.RESPONSE_OBJECT_KEY);
-					// categories received from server, get it from content provider
-					getCategoriesFromDb();
-				}
+			public void onResponse() {
+				getCategoriesFromDb();
 			}
-		});
+		}, null);
 	}
 
 	/**
@@ -197,7 +202,6 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 	 */
 	private void addCategoriesFromCursor(Cursor cursor){
 
-		cursor.moveToFirst();
 		while (cursor.moveToNext()) {
 			Category category	= Category.fromCursor(cursor);
 			mCategories.add(category);
@@ -206,10 +210,10 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 		onCategoriesReceived(0);
 	}
 
-	private void getCategoriesFromDb() {
-		getLoaderManager().restartLoader(GET_CATEGORIES_LOADER, null, this);
-	}
-
+	/**
+	 * calls when we read categories from DB
+	 * @param initCategoryIndex
+	 */
 	private void onCategoriesReceived(int initCategoryIndex){
 		// fill spinner with categories
 		ArrayAdapter<Category> adapter = new ArrayAdapter<Category>(getActivity()
@@ -219,33 +223,44 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 		mSpinner.setSelection(initCategoryIndex);
 	}
 
+	/**
+	 * event user click on View button
+	 */
 	private void onViewModeButtonClicked(){
+		disableUiFields();
+		mViewButton.setEnabled(false);
+		mEditButton.setEnabled(true);
+	}
+
+	/**
+	 * disable fields in UI
+	 */
+	private void disableUiFields(){
 		mTitleEdit.setEnabled(false);
 		mDescriptionEdit.setEnabled(false);
 		mSaveButton.setVisibility(View.INVISIBLE);
 		mIsPublishedSwitch.setEnabled(false);
-		mViewButton.setEnabled(false);
 		mSpinner.setEnabled(false);
 	}
 
+	/**
+	 * event user click on Edit button
+	 */
 	private void onEditModeButtonClicked(){
 		mTitleEdit.setEnabled(true);
-		mDescriptionEdit.setEnabled(true
-		);
+		mDescriptionEdit.setEnabled(true);
 		mSaveButton.setVisibility(View.VISIBLE);
 		mIsPublishedSwitch.setEnabled(true);
 		mEditButton.setEnabled(false);
+		mViewButton.setEnabled(true);
 		mSpinner.setEnabled(true);
 	}
 
 	/**
-	 * save article
+	 * event user click on save article button
 	 */
 	private void onSavePressed(){
-		// 1) save to server
-		// 2) get result's idFromServer
-		// 3) save to DB
-		String title		=  mTitleEdit.getText().toString();
+		String title		= mTitleEdit.getText().toString();
 		String description	= mDescriptionEdit.getText().toString();
 		long updated		= (new Date()).getTime();
 		long categoryId		= mCategories.get(mSpinner.getSelectedItemPosition()).getId();
@@ -258,59 +273,64 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 		Article article 	= new Article(-1,title, description, "", true, categoryId
 				, 0,0,true);
 
-		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-		String jsonContent	= gson.toJson(new ArticleRequestContainer(article));
-		if( mArticleUri == null) {
+		Gson gson =  new GsonBuilder()
+				.setPrettyPrinting()
+				.registerTypeAdapter(Article.class, new Article.ArticlefSerializer())
+				.create();
+		String jsonContent	= gson.toJson(article);
+
+		//  save to server
+		if( mArticleId < 0) {
 			// add new article
-			ApiServiceHelper.getInstance().putArticle(new DataRequest(jsonContent)
-					, new ResultReceiver(new Handler()) {
-				@Override
-				protected void onReceiveResult(int resultCode, Bundle resultData) {
-					if (resultData.containsKey(ApiService.ERROR_KEY)) {
-					} else {
-						DataResponse response = (DataResponse) resultData
-								.getSerializable(ApiService.RESPONSE_OBJECT_KEY);
-					}
-				}
-			});
+			putArticleRequest(jsonContent, null, null);
+
 		} else {
 			// edit my article
-			ApiServiceHelper.getInstance().editArticle(new DataRequest(mArticleUri.getLastPathSegment()
-					, jsonContent), new ResultReceiver(new Handler()) {
-				@Override
-				protected void onReceiveResult(int resultCode, Bundle resultData) {
-					if (resultData.containsKey(ApiService.ERROR_KEY)) {
-						getCategoriesFromDb();
-					} else {
-						DataResponse response = (DataResponse) resultData
-								.getSerializable(ApiService.RESPONSE_OBJECT_KEY);
-						// update in db
-					}
-				}
-			});
-
+			editArticleRequest(mArticleId, jsonContent, null, null);
 		}
 	}
 
-	// user create new article
+	/**
+	 * user create new article
+	 */
 	@Override
 	public void onCreateNewArticle() {
 		// set defaults values
-		mArticleUri	= null;
-		mTitleEdit.setText("");
-		mDescriptionEdit.setText("");
-		mSpinner.setSelection(0);
-		mIsPublishedSwitch.setChecked(false);
+		mArticleId	= -1;
+		clearFields();
 		onEditModeButtonClicked();
-
 	}
 
+
+	/**
+	 * event when user click on article in topic list
+	 * @param id
+	 */
 	@Override
 	public void onOpenArticle(long id) {
 		// open article data from cursorLoader
 		Bundle args	= new Bundle();
 		args.putLong(PARAM_ARTICLE_ID,id);
 		getLoaderManager().restartLoader(GET_CURRENT_ARTICLE_LOADER, args, this);
+	}
+
+	@Override
+	public void onDeleteArticle(long id) {
+		if(mArticleId == id){
+			// clear fields
+			clearFields();
+			disableUiFields();
+		}
+	}
+
+	/**
+	 * clear UI fields
+	 */
+	private void clearFields(){
+		mTitleEdit.setText("");
+		mDescriptionEdit.setText("");
+		mSpinner.setSelection(0);
+		mIsPublishedSwitch.setChecked(false);
 	}
 
 	/**
@@ -320,7 +340,7 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 	private void fillUiWithData(Cursor cursor){
 		cursor.moveToFirst();
 		Article currentArticle	= Article.fromCursor(cursor);
-
+		mArticleId				= currentArticle.getId();
 		mTitleEdit.setText(currentArticle.getTitle());
 		mDescriptionEdit.setText(currentArticle.getDescription());
 		mIsPublishedSwitch.setChecked(currentArticle.isPublished());
@@ -332,19 +352,9 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 
 		// can we edit article?
 		mEditButton.setEnabled(currentArticle.getIsMine());
-		//mViewButton.setEnabled(currentArticle.getIsMine());
-		// always close the cursor
 		cursor.close();
 	}
 
-	private int getCategoryIndexById(long id){
-		for(int i = 0; i < mCategories.size(); i++){
-			if(mCategories.get(i).getId() == id){
-				return i;
-			}
-		}
-		return -1;
-	}
 
 	//------ Cursor Loader ------
 	@Override
@@ -409,6 +419,20 @@ public class ArticlesFragment extends Fragment implements IActivityArticleIntera
 		outState.putString(STATE_ARTICLE_DESCRIPTION, mDescriptionEdit.getText().toString());
 		outState.putInt(STATE_ARTICLE_CATEGORY
 				, mSpinner.getSelectedItemPosition());
+	}
+
+	/**
+	 * get category spinner index by category ID
+	 * @param id
+	 * @return
+	 */
+	private int getCategoryIndexById(long id){
+		for(int i = 0; i < mCategories.size(); i++){
+			if(mCategories.get(i).getId() == id){
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	@Override

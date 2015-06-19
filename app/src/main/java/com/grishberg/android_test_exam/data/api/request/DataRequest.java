@@ -3,30 +3,41 @@ package com.grishberg.android_test_exam.data.api.request;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.grishberg.android_test_exam.data.api.response.DataResponse;
+
 import java.io.Serializable;
 
 /**
  * Created by grigoriy on 16.06.15.
  */
 public class DataRequest implements Parcelable {
-	private String id;
+	private long id;
 	private String data;
 
 	public DataRequest(){
-		this(null, null);
+		this(0, null);
+	}
+
+	public DataRequest(long id){
+		this(id, null);
 	}
 
 	public DataRequest(String data){
-		this(null, data);
+		this(0, data);
 	}
 
-	public DataRequest(String id, String data){
+	public DataRequest(long id, String data){
 		this.id		= id;
 		this.data	= data;
 	}
 
-	public String getId(){return id;}
-	public String getData(){ return data;}
+//	public DataRequest(String id, String data){
+//		this(0, id, data);
+//	}
+
+
+	public long		getId(){ return id;}
+	public String 	getData(){ return data;}
 
 	//--------------- implement Parcelable
 
@@ -37,7 +48,7 @@ public class DataRequest implements Parcelable {
 
 	@Override
 	public void writeToParcel(Parcel dest, int flags) {
-		dest.writeString(id);
+		dest.writeLong(id);
 		dest.writeString(data);
 	}
 
@@ -53,7 +64,7 @@ public class DataRequest implements Parcelable {
 	};
 
 	public DataRequest( Parcel in){
-		id		= in.readString();
+		id		= in.readLong();
 		data	= in.readString();
 	}
 }

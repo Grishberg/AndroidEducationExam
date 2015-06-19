@@ -3,9 +3,14 @@ package com.grishberg.android_test_exam.data.containers;
 import android.content.ContentValues;
 import android.database.Cursor;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.annotations.Expose;
 import com.grishberg.android_test_exam.data.model.DbHelper;
 
+import java.lang.reflect.Type;
 import java.util.Date;
 
 /**
@@ -121,5 +126,21 @@ public class Article {
 
 	public boolean getIsMine() {
 		return own;
+	}
+
+	public static class ArticlefSerializer implements JsonSerializer<Article>
+	{
+		@Override
+		public JsonElement serialize(Article src, Type typeOfSrc, JsonSerializationContext context)
+		{
+			JsonObject result = new JsonObject();
+			result.addProperty("title", src.getTitle());
+			result.addProperty("description", src.getDescription());
+			result.addProperty("published", src.isPublished());
+			result.addProperty("category_id", src.getCategoryId());
+
+			//result.add("Article", fields);
+			return result;
+		}
 	}
 }

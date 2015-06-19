@@ -45,6 +45,9 @@ public class ApiServiceHelper {
 		startService(data, ApiService.ACTION_EDIT_ARTICLE, onServiceResult);
 	}
 
+	public void deleteArticle(DataRequest data, ResultReceiver onServiceResult){
+		startService(data, ApiService.ACTION_DELETE_ARTICLE, onServiceResult);
+	}
 	 /*
     utils
      */

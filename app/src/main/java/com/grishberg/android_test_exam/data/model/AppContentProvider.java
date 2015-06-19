@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.text.TextUtils;
@@ -43,6 +44,10 @@ public class AppContentProvider extends ContentProvider {
 	}
 
 	public static Uri getArticlesUri(long id){
+		return Uri.parse(AppContentProvider.CONTENT_URI_ARTICLES + "/" + id);
+	}
+
+	public static Uri getArticlesUri(String id){
 		return Uri.parse(AppContentProvider.CONTENT_URI_ARTICLES + "/" + id);
 	}
 
@@ -96,7 +101,8 @@ public class AppContentProvider extends ContentProvider {
 	public Uri insert(Uri uri, ContentValues values) {
 		String table = parseUri(uri);
 		SQLiteDatabase db = dbHelper.getWritableDatabase();
-		long id = db.insert(table, null, values);
+		long id = insertOrUpdateById(db,uri,table,values,DbHelper.COLUMN_ID);
+//		long id = db.insert(table, null, values);
 		//need if autoincrement
 		//if (-1 == id) {
 		//	throw new RuntimeException("Record wasn't saved.");
@@ -150,7 +156,7 @@ public class AppContentProvider extends ContentProvider {
 				String id	= uri.getLastPathSegment();
 				if (TextUtils.isEmpty(selection)) {
 					result = db.update(DbHelper.TABLE_ARTICLES
-							, values, DbHelper.COLUMN_ID + " = ?" + id, selectionArgs);
+							, values, DbHelper.COLUMN_ID + " = ?", new String[]{id});
 				} else {
 					result = db.update(DbHelper.TABLE_ARTICLES
 							, values, DbHelper.COLUMN_ID + " = " + id + " AND "
@@ -184,6 +190,22 @@ public class AppContentProvider extends ContentProvider {
 				throw new IllegalArgumentException("Invalid DB code: " + match);
 		}
 		return table;
+	}
+
+	private long insertOrUpdateById(SQLiteDatabase db, Uri uri, String table,
+									ContentValues values, String column) throws SQLiteConstraintException{
+		long result	= -1;
+
+		try {
+			result	= db.insertOrThrow(table, null, values);
+		} catch (SQLiteConstraintException e) {
+			int nrRows = update(uri, values, column + "=?",
+					new String[]{values.getAsString(column)});
+			if (nrRows == 0) {
+				throw e;
+			}
+		}
+		return result;
 	}
 
 	private Cursor getCategories(){

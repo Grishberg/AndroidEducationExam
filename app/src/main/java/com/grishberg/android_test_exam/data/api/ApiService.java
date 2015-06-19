@@ -27,6 +27,7 @@ public class ApiService extends IntentService {
 	public static final int ACTION_GET_ARTICLES		= 2;
 	public static final int ACTION_PUT_ARTICLE		= 3;
 	public static final int ACTION_EDIT_ARTICLE		= 4;
+	public static final int ACTION_DELETE_ARTICLE	= 5;
 
 
 
@@ -61,6 +62,8 @@ public class ApiService extends IntentService {
 				return putArticle((DataRequest) getRequestObject(intent));
 			case ACTION_EDIT_ARTICLE:
 				return editArticle((DataRequest) getRequestObject(intent));
+			case ACTION_DELETE_ARTICLE:
+				return deleteArticle((DataRequest) getRequestObject(intent));
 
 
 		}
@@ -115,10 +118,10 @@ public class ApiService extends IntentService {
 		return bundle;
 	}
 
-	private Bundle getData(DataRequest request){
-		Requester requester = new Requester();
-		Bundle bundle = new Bundle();
-		DataResponse response = requester.getArticles(request);
+	private Bundle deleteArticle(DataRequest request){
+		Requester requester		= new Requester();
+		Bundle bundle			= new Bundle();
+		DataResponse response	= requester.deleteArticle(request);
 		if(response == null){
 			bundle.putBoolean(ERROR_KEY, true);
 		} else {

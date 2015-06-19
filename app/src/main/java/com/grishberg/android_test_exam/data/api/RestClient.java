@@ -1,6 +1,7 @@
 package com.grishberg.android_test_exam.data.api;
 
 import android.util.Log;
+import android.util.Xml;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -28,9 +29,8 @@ import java.util.List;
 /**
  * Created by grigoriy on 16.06.15.
  */
-public class RestClient {
+public class RestClient<T> {
 	private static final String TAG = "RestClient";
-	// user id = 3
 	public static final String API_KEY = "157922e9c8c383f89a3a66d6735b02af";
 
 	public RestClient() {
@@ -71,7 +71,7 @@ public class RestClient {
 		return apiResponse;
 	}
 
-	public ApiResponse doPost(String url, List<NameValuePair> postParams, StringEntity stringEntity) {
+	public ApiResponse doPost(String url, List<NameValuePair> postParams, String string) {
 		ApiResponse apiResponse = new ApiResponse();
 
 		HttpClient httpClient = getHttpClient();
@@ -86,6 +86,9 @@ public class RestClient {
 			if (postParams != null) {
 				httpPost.setEntity(new UrlEncodedFormEntity(postParams, "UTF-8"));
 			}
+
+			StringEntity stringEntity	= null;
+			stringEntity = new StringEntity(string, "UTF-8");
 			if (stringEntity != null) {
 				httpPost.setEntity(stringEntity);
 			}
@@ -101,7 +104,7 @@ public class RestClient {
 		return apiResponse;
 	}
 
-	public ApiResponse doPut(String url, StringEntity stringEntity) {
+	public ApiResponse doPut(String url, String string) {
 		ApiResponse apiResponse = new ApiResponse();
 
 		HttpClient httpClient = getHttpClient();
@@ -113,6 +116,8 @@ public class RestClient {
 		setDefaultHeaders(httpPut);
 
 		try {
+			StringEntity stringEntity	= null;
+			stringEntity = new StringEntity(string, "UTF-8");
 			if (stringEntity != null) {
 				httpPut.setEntity(stringEntity);
 			}
@@ -167,10 +172,8 @@ public class RestClient {
 
 	private void setDefaultHeaders(HttpRequestBase httpRequest) {
         httpRequest.setHeader("Authorization", "Token token="+API_KEY);
-		httpRequest.setHeader("Content-Type", "Content-Type");
-
-//        httpRequest.setHeader("Accept-Encoding", "gzip");
+		httpRequest.setHeader("Content-Type", "application/json");
+        httpRequest.setHeader("Accept-Encoding", "utf-8");
 //        httpRequest.setHeader("Accept-Language", language);
 	}
-
 }
