@@ -313,6 +313,7 @@ public class TopicListFragment extends BaseFragment
 			}
 		} else {
 			// child loaders
+			//TODO: через бандл передать ид группы, для поиска всех детей с данной группой
 			// filter items
 			String selection = null;
 			String[] selectionArgs = null;
