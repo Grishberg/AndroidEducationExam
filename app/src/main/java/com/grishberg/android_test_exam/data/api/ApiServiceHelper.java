@@ -37,8 +37,8 @@ public class ApiServiceHelper {
 		startService(data, ApiService.ACTION_GET_ARTICLES, onServiceResult);
 	}
 
-	public void putArticle(DataRequest data, ResultReceiver onServiceResult){
-		startService(data, ApiService.ACTION_PUT_ARTICLE, onServiceResult);
+	public void addArticle(DataRequest data, ResultReceiver onServiceResult){
+		startService(data, ApiService.ACTION_ADD_ARTICLE, onServiceResult);
 	}
 
 	public void editArticle(DataRequest data, ResultReceiver onServiceResult){
@@ -48,6 +48,7 @@ public class ApiServiceHelper {
 	public void deleteArticle(DataRequest data, ResultReceiver onServiceResult){
 		startService(data, ApiService.ACTION_DELETE_ARTICLE, onServiceResult);
 	}
+
 	 /*
     utils
      */

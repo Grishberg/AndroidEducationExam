@@ -25,10 +25,9 @@ public class ApiService extends IntentService {
 
 	public static final int ACTION_GET_CATEGORIES	= 1;
 	public static final int ACTION_GET_ARTICLES		= 2;
-	public static final int ACTION_PUT_ARTICLE		= 3;
+	public static final int ACTION_ADD_ARTICLE		= 3;
 	public static final int ACTION_EDIT_ARTICLE		= 4;
 	public static final int ACTION_DELETE_ARTICLE	= 5;
-
 
 
 	private boolean 		destroyed;
@@ -53,75 +52,38 @@ public class ApiService extends IntentService {
 	}
 
 	private Bundle processIntent(Intent intent, int  action){
+
+		DataResponse response	= null;
+		Requester requester		= new Requester();
+		Bundle bundle			= new Bundle();
+
 		switch (action){
+
 			case ACTION_GET_CATEGORIES:
-				return getCategories((DataRequest) getRequestObject(intent));
+				 response = requester.getCategories((DataRequest) getRequestObject(intent));
+				break;
+
 			case ACTION_GET_ARTICLES:
-				return getArticles((DataRequest) getRequestObject(intent));
-			case ACTION_PUT_ARTICLE:
-				return putArticle((DataRequest) getRequestObject(intent));
+				response = requester.getArticles((DataRequest) getRequestObject(intent));
+				break;
+
+			case ACTION_ADD_ARTICLE:
+				response = requester.addArticle((DataRequest) getRequestObject(intent));
+				break;
+
 			case ACTION_EDIT_ARTICLE:
-				return editArticle((DataRequest) getRequestObject(intent));
+				response = requester.editArticle((DataRequest) getRequestObject(intent));
+				break;
+
 			case ACTION_DELETE_ARTICLE:
-				return deleteArticle((DataRequest) getRequestObject(intent));
+				response = requester.deleteArticle((DataRequest) getRequestObject(intent));
+				break;
 
+			default:
+				return null;
 
 		}
-		return null;
-	}
 
-	private Bundle getCategories(DataRequest request){
-		Requester requester = new Requester();
-		Bundle bundle = new Bundle();
-		DataResponse response = requester.getCategories(request);
-		if(response == null){
-			bundle.putBoolean(ERROR_KEY, true);
-		} else {
-			bundle.putParcelable(RESPONSE_OBJECT_KEY, response);
-		}
-		return bundle;
-	}
-
-	private Bundle getArticles(DataRequest request){
-		Requester requester		= new Requester();
-		Bundle bundle			= new Bundle();
-		DataResponse response	= requester.getArticles(request);
-		if(response == null){
-			bundle.putBoolean(ERROR_KEY, true);
-		} else {
-			bundle.putParcelable(RESPONSE_OBJECT_KEY, response);
-		}
-		return bundle;
-	}
-
-	private Bundle putArticle(DataRequest request){
-		Requester requester		= new Requester();
-		Bundle bundle			= new Bundle();
-		DataResponse response	= requester.putArticle(request);
-		if(response == null){
-			bundle.putBoolean(ERROR_KEY, true);
-		} else {
-			bundle.putParcelable(RESPONSE_OBJECT_KEY, response);
-		}
-		return bundle;
-	}
-
-	private Bundle editArticle(DataRequest request){
-		Requester requester		= new Requester();
-		Bundle bundle			= new Bundle();
-		DataResponse response	= requester.editArticle(request);
-		if(response == null){
-			bundle.putBoolean(ERROR_KEY, true);
-		} else {
-			bundle.putParcelable(RESPONSE_OBJECT_KEY, response);
-		}
-		return bundle;
-	}
-
-	private Bundle deleteArticle(DataRequest request){
-		Requester requester		= new Requester();
-		Bundle bundle			= new Bundle();
-		DataResponse response	= requester.deleteArticle(request);
 		if(response == null){
 			bundle.putBoolean(ERROR_KEY, true);
 		} else {

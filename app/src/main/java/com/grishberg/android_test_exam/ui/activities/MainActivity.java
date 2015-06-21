@@ -56,6 +56,14 @@ public class MainActivity extends Activity implements
 		}
 	}
 
+
+	@Override
+	public void onDeleteArticle(long id) {
+		if(mArticleFragment != null){
+			mArticleFragment.onDeleteArticle(id);
+		}
+	}
+
 	@Override
 	public void onRegister(IActivityArticleInteractionListener fragment) {
 		mArticleFragment	= fragment;

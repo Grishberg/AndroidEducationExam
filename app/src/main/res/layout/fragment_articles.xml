@@ -122,6 +122,7 @@
             <Button
                 android:id="@+id/fragment_article_image_change_button"
                 android:text="@string/fragment_articles_image_change_button_text"
+                android:enabled="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"

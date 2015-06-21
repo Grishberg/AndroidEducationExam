@@ -426,7 +426,14 @@ public class TopicListFragment extends BaseFragment
 			case R.id.action_delete_listview:
 				AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item
 						.getMenuInfo();
-				deleteArticleRequest(info.id, null, null);
+				deleteArticleRequest(info.id, new IResponseListener() {
+					@Override
+					public void onResponse(long id) {
+						if (mListener != null && id > 0) {
+							mListener.onDeleteArticle(id);
+						}
+					}
+				}, null);
 				return true;
 
 			case R.id.action_delete_listviewex:

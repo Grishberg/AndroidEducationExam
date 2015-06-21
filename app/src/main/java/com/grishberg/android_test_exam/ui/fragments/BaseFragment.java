@@ -19,7 +19,7 @@ public abstract class BaseFragment extends Fragment {
 		void onError();
 	}
 	protected interface IResponseListener{
-		void onResponse();
+		void onResponse(long id);
 	}
 
 	public void getArticlesRequest(final IResponseListener	responseListener
@@ -28,57 +28,59 @@ public abstract class BaseFragment extends Fragment {
 			@Override
 			protected void onReceiveResult(int resultCode, Bundle resultData) {
 				if (resultData.containsKey(ApiService.ERROR_KEY)) {
-					if(errorListener != null){
+					if (errorListener != null) {
 						errorListener.onError();
 					}
 				} else {
-					if(responseListener != null){
-						responseListener.onResponse();
+					if (responseListener != null) {
+						responseListener.onResponse(0L);
 					}
 				}
 			}
 		});
 	}
 
-	public void putArticleRequest(String body
+	public void addArticleRequest(String body, String imagePath
 			, final IResponseListener	responseListener
 			, final IErrorListener		errorListener) {
 
-		ApiServiceHelper.getInstance().putArticle(new DataRequest(body)
+		ApiServiceHelper.getInstance().addArticle(new DataRequest(body, imagePath)
 				, new ResultReceiver(new Handler()) {
 
 			@Override
 			protected void onReceiveResult(int resultCode, Bundle resultData) {
 				if (resultData.containsKey(ApiService.ERROR_KEY)) {
-					if(errorListener != null){
+					if (errorListener != null) {
 						errorListener.onError();
 					}
 				} else {
 
 					DataResponse response = (DataResponse) resultData
 							.getParcelable(ApiService.RESPONSE_OBJECT_KEY);
-					if(responseListener!= null){
-						responseListener.onResponse();
+					if (responseListener != null) {
+						responseListener.onResponse(response.getId());
 					}
 				}
 			}
 		});
 	}
 
-	public void editArticleRequest(long id, String body
+	public void editArticleRequest(long id, String body, String imagePath
 			, final IResponseListener	responseListener
 			, final IErrorListener		errorListener){
 		ApiServiceHelper.getInstance().editArticle(new DataRequest(id
-				, body), new ResultReceiver(new Handler()) {
+				, body, imagePath), new ResultReceiver(new Handler()) {
 			@Override
 			protected void onReceiveResult(int resultCode, Bundle resultData) {
 				if (resultData.containsKey(ApiService.ERROR_KEY)) {
-					if(errorListener != null){
+					if (errorListener != null) {
 						errorListener.onError();
 					}
 				} else {
-					if(responseListener != null){
-						responseListener.onResponse();
+					DataResponse response = (DataResponse) resultData
+							.getParcelable(ApiService.RESPONSE_OBJECT_KEY);
+					if (responseListener != null) {
+						responseListener.onResponse(response.getId());
 					}
 				}
 			}
@@ -89,7 +91,20 @@ public abstract class BaseFragment extends Fragment {
 			, final IResponseListener	responseListener
 			, final IErrorListener		errorListener){
 
-
+		ApiServiceHelper.getInstance().deleteArticle(new DataRequest(id), new ResultReceiver(new Handler()) {
+			@Override
+			protected void onReceiveResult(int resultCode, Bundle resultData) {
+				if (resultData.containsKey(ApiService.ERROR_KEY)) {
+					if (errorListener != null) {
+						errorListener.onError();
+					}
+				} else {
+					if (responseListener != null) {
+						responseListener.onResponse(0L);
+					}
+				}
+			}
+		});
 	}
 
 	public void getCategoriesRequest(final IResponseListener	responseListener
@@ -99,18 +114,16 @@ public abstract class BaseFragment extends Fragment {
 			@Override
 			protected void onReceiveResult(int resultCode, Bundle resultData) {
 				if (resultData.containsKey(ApiService.ERROR_KEY)) {
-					if(errorListener != null){
+					if (errorListener != null) {
 						errorListener.onError();
 					}
 				} else {
-					if(responseListener != null){
-						responseListener.onResponse();
+					if (responseListener != null) {
+						responseListener.onResponse(0L);
 					}
 				}
 			}
 		});
 	}
-
-
 
 }

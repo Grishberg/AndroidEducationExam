@@ -5,18 +5,23 @@ import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
+import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Switch;
 
@@ -35,10 +40,12 @@ import com.grishberg.android_test_exam.data.model.AppContentProvider;
 import com.grishberg.android_test_exam.data.model.DbHelper;
 import com.grishberg.android_test_exam.ui.listeners.IActivityArticleInteractionListener;
 import com.grishberg.android_test_exam.ui.listeners.IArticleFragmentInteractionListener;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -47,6 +54,8 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 
 	private static final int GET_CURRENT_ARTICLE_LOADER 	= 1;
 	private static final int GET_CATEGORIES_LOADER 			= 2;
+
+	public static final int GET_IMAGE_REQUEST_CODE 			= 1;
 
 	private static final String PARAM_ARTICLE_ID 			= "paramArticleId";
 	private static final String STATE_ARTICLE_ID			= "stateArticleId";
@@ -60,9 +69,11 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 	private IArticleFragmentInteractionListener mListener;
 	private long 				mArticleId;
 	private long 				mCreatedDate;
+	private String					mImagePath;
 	private ArrayList<Category> mCategories;
 	String[] 					mArticlesProjection;
 	String[] 					mCategoriesProjection;
+
 
 	// controls
 	private EditText 	mTitleEdit;
@@ -70,8 +81,11 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 	private Button		mViewButton;
 	private Button		mEditButton;
 	private Button		mSaveButton;
+	private Button		mAddImageButton;
+
 	private Spinner		mSpinner;
 	private Switch		mIsPublishedSwitch;
+	private ImageView	mImage;
 
 	public static ArticlesFragment newInstance(long articleId) {
 		ArticlesFragment fragment = new ArticlesFragment();
@@ -113,7 +127,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 		mCategories			= new ArrayList<>();
 		mTitleEdit			= (EditText) view.findViewById(R.id.fragment_article_edit_title);
 		mDescriptionEdit	= (EditText) view.findViewById(R.id.fragment_article_edit_description);
-
+		mImage				= (ImageView) view.findViewById(R.id.fragment_articles_image);
 		mSpinner			= (Spinner) view.findViewById(R.id.fragment_article_category_spinner);
 		mSpinner.setEnabled(false);
 
@@ -156,6 +170,13 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 			}
 		});
 
+		mAddImageButton	= (Button) view.findViewById(R.id.fragment_article_image_change_button);
+		mAddImageButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onChangeImage();
+			}
+		});
 		// set projection
 		mArticlesProjection = new String[] {DbHelper.COLUMN_ID
 				, DbHelper.ARTICLES_CATEGORY_ID
@@ -190,7 +211,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 		// 2) send request to server
 		getCategoriesRequest(new IResponseListener() {
 			@Override
-			public void onResponse() {
+			public void onResponse(long id) {
 				getCategoriesFromDb();
 			}
 		}, null);
@@ -241,6 +262,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 		mSaveButton.setVisibility(View.INVISIBLE);
 		mIsPublishedSwitch.setEnabled(false);
 		mSpinner.setEnabled(false);
+		mAddImageButton.setEnabled(false);
 	}
 
 	/**
@@ -253,9 +275,40 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 		mIsPublishedSwitch.setEnabled(true);
 		mEditButton.setEnabled(false);
 		mViewButton.setEnabled(true);
+		mAddImageButton.setEnabled(true);
 		mSpinner.setEnabled(true);
 	}
 
+	private void onChangeImage(){
+		Intent intent = new Intent();
+		// Show only images, no videos or anything else
+		intent.setType(getString(R.string.fragment_action_image_type));
+		intent.setAction(Intent.ACTION_GET_CONTENT);
+		// Always show the chooser (if there are multiple options available)
+		startActivityForResult(Intent.createChooser(intent, getString(R.string.fragment_action_select_image_text))
+				, GET_IMAGE_REQUEST_CODE);
+
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
+		if (requestCode == GET_IMAGE_REQUEST_CODE && resultCode == getActivity().RESULT_OK
+				&& data != null && data.getData() != null) {
+
+			Uri uri = data.getData();
+
+			try {
+				Bitmap bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
+				// Log.d(TAG, String.valueOf(bitmap));
+				mImage.setImageBitmap(bitmap);
+				mImagePath = uri.toString();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 	/**
 	 * event user click on save article button
 	 */
@@ -282,11 +335,16 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 		//  save to server
 		if( mArticleId < 0) {
 			// add new article
-			putArticleRequest(jsonContent, null, null);
+			addArticleRequest(jsonContent, mImagePath, new IResponseListener() {
+				@Override
+				public void onResponse(long id) {
+					mArticleId = id;
+				}
+			}, null);
 
 		} else {
 			// edit my article
-			editArticleRequest(mArticleId, jsonContent, null, null);
+			editArticleRequest(mArticleId,mImagePath, jsonContent, null, null);
 		}
 	}
 
@@ -310,7 +368,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 	public void onOpenArticle(long id) {
 		// open article data from cursorLoader
 		Bundle args	= new Bundle();
-		args.putLong(PARAM_ARTICLE_ID,id);
+		args.putLong(PARAM_ARTICLE_ID, id);
 		getLoaderManager().restartLoader(GET_CURRENT_ARTICLE_LOADER, args, this);
 	}
 
@@ -327,10 +385,12 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 	 * clear UI fields
 	 */
 	private void clearFields(){
+		mImagePath	= null;
 		mTitleEdit.setText("");
 		mDescriptionEdit.setText("");
 		mSpinner.setSelection(0);
 		mIsPublishedSwitch.setChecked(false);
+		Picasso.with(getActivity()).load(R.drawable.default_photo).into(mImage);
 	}
 
 	/**
@@ -348,6 +408,11 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 		int spinnerSelection = getCategoryIndexById(currentArticle.getCategoryId());
 		if( spinnerSelection >= 0){
 			mSpinner.setSelection(spinnerSelection);
+		}
+		if(!TextUtils.isEmpty(currentArticle.getPhotoUrl() )){
+			Picasso.with(getActivity()).load(currentArticle.getPhotoUrl()).into(mImage);
+		}else {
+			Picasso.with(getActivity()).load(R.drawable.default_photo).into(mImage);
 		}
 
 		// can we edit article?

@@ -8,4 +8,5 @@ public interface ITopicListFragmentInteraction {
 	void onUnregister(IActivityTopicListInteractionListener fragment);
 	void onItemClicked(long id);
 	void onCreateNewArticle();
+	void onDeleteArticle(long id);
 }

@@ -22,5 +22,7 @@
 
     <string name="action_delete_listview_text">delete</string>
     <string name="action_delete_listviewex_text">delete</string>
+    <string name="fragment_action_select_image_text">Select image</string>
+    <string name="fragment_action_image_type">image/*</string>
 
 </resources>
