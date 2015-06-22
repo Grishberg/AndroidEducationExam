@@ -9,5 +9,6 @@
     <dimen name="fragment_topiclist_action_button_range">20dp</dimen>
 
     <dimen name="fragment_article_image_size">100dp</dimen>
+    <dimen name="fragment_article_editimage_button_size">30dp</dimen>
 
 </resources>

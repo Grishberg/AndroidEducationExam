@@ -119,15 +119,17 @@
                 android:layout_height="match_parent"
                 />
 
-            <Button
+            <ImageButton
                 android:id="@+id/fragment_article_image_change_button"
                 android:text="@string/fragment_articles_image_change_button_text"
                 android:enabled="false"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="@dimen/fragment_article_editimage_button_size"
+                android:layout_height="@dimen/fragment_article_editimage_button_size"
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true"/>
+                android:layout_alignParentEnd="true"
+                android:src="@drawable/edit"
+                android:scaleType="centerInside"/>
         </RelativeLayout>
     </RelativeLayout>
 
