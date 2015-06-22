@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Switch;
@@ -81,7 +82,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 	private Button		mViewButton;
 	private Button		mEditButton;
 	private Button		mSaveButton;
-	private Button		mAddImageButton;
+	private ImageButton		mAddImageButton;
 
 	private Spinner		mSpinner;
 	private Switch		mIsPublishedSwitch;
@@ -170,7 +171,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 			}
 		});
 
-		mAddImageButton	= (Button) view.findViewById(R.id.fragment_article_image_change_button);
+		mAddImageButton	= (ImageButton) view.findViewById(R.id.fragment_article_image_change_button);
 		mAddImageButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
