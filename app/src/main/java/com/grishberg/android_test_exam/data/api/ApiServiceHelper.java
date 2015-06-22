@@ -7,6 +7,7 @@ import android.os.ResultReceiver;
 
 import com.grishberg.android_test_exam.AppController;
 import com.grishberg.android_test_exam.data.api.request.DataRequest;
+import com.grishberg.android_test_exam.data.api.request.DeleteDataRequest;
 
 import java.io.Serializable;
 
@@ -29,12 +30,12 @@ public class ApiServiceHelper {
 		super();
 	}
 
-	public void getCategories(DataRequest data, ResultReceiver onServiceResult){
-		startService(data, ApiService.ACTION_GET_CATEGORIES, onServiceResult);
+	public void getCategories( ResultReceiver onServiceResult){
+		startService(null, ApiService.ACTION_GET_CATEGORIES, onServiceResult);
 	}
 
-	public void getArticles(DataRequest data, ResultReceiver onServiceResult){
-		startService(data, ApiService.ACTION_GET_ARTICLES, onServiceResult);
+	public void getArticles( ResultReceiver onServiceResult){
+		startService(null, ApiService.ACTION_GET_ARTICLES, onServiceResult);
 	}
 
 	public void addArticle(DataRequest data, ResultReceiver onServiceResult){
@@ -45,7 +46,7 @@ public class ApiServiceHelper {
 		startService(data, ApiService.ACTION_EDIT_ARTICLE, onServiceResult);
 	}
 
-	public void deleteArticle(DataRequest data, ResultReceiver onServiceResult){
+	public void deleteArticle(DeleteDataRequest data, ResultReceiver onServiceResult){
 		startService(data, ApiService.ACTION_DELETE_ARTICLE, onServiceResult);
 	}
 

@@ -42,6 +42,8 @@ public class Category implements Parcelable{
 
 	}
 
+	//-------------- Parcelable -----------------
+
 	public ContentValues buildContentValues() {
 		ContentValues cv = new ContentValues();
 		if (id >= 0) {

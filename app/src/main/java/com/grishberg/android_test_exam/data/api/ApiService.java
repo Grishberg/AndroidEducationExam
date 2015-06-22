@@ -8,6 +8,7 @@ import android.os.ResultReceiver;
 import android.util.Log;
 
 import com.grishberg.android_test_exam.data.api.request.DataRequest;
+import com.grishberg.android_test_exam.data.api.request.DeleteDataRequest;
 import com.grishberg.android_test_exam.data.api.response.DataResponse;
 
 /**
@@ -60,11 +61,11 @@ public class ApiService extends IntentService {
 		switch (action){
 
 			case ACTION_GET_CATEGORIES:
-				 response = requester.getCategories((DataRequest) getRequestObject(intent));
+				 response = requester.getCategories();
 				break;
 
 			case ACTION_GET_ARTICLES:
-				response = requester.getArticles((DataRequest) getRequestObject(intent));
+				response = requester.getArticles();
 				break;
 
 			case ACTION_ADD_ARTICLE:
@@ -76,7 +77,7 @@ public class ApiService extends IntentService {
 				break;
 
 			case ACTION_DELETE_ARTICLE:
-				response = requester.deleteArticle((DataRequest) getRequestObject(intent));
+				response = requester.deleteArticle((DeleteDataRequest) getRequestObject(intent));
 				break;
 
 			default:

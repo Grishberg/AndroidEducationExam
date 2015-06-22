@@ -5,6 +5,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.grishberg.android_test_exam.data.api.response.DataResponse;
+import com.grishberg.android_test_exam.data.containers.Article;
 
 import java.io.Serializable;
 
@@ -12,43 +13,28 @@ import java.io.Serializable;
  * Created by grigoriy on 16.06.15.
  */
 public class DataRequest implements Parcelable {
-	private long id;
-	private String data;
-	private String uri;
+	private Article	article;
+	private String	uri;
 
 	public DataRequest(){
-		this(0, null);
+		this(null, null);
 	}
 
 	public DataRequest(long id){
-		this(id, null,null);
+		this(null, null);
 	}
 
-	public DataRequest(String data){
-		this(0, data,null);
+	public DataRequest(Article article){
+		this(article,null);
 	}
 
-	public DataRequest(long id, String data){
-		this(id,data,null);
+
+	public DataRequest(Article article, String uri){
+		this.article	= article;
+		this.uri		= uri;
 	}
 
-	public DataRequest(String data, String uri){
-		this(0,data,uri);
-	}
-
-	public DataRequest(long id, String data, String uri){
-		this.id		= id;
-		this.data	= data;
-		this.uri	= uri;
-	}
-
-//	public DataRequest(String id, String data){
-//		this(0, id, data);
-//	}
-
-
-	public long		getId(){ return id;}
-	public String 	getData(){ return data;}
+	public Article	getArticle(){ return article;}
 	public String 	getAdditionalData(){ return uri;}
 
 	//--------------- implement Parcelable
@@ -60,8 +46,7 @@ public class DataRequest implements Parcelable {
 
 	@Override
 	public void writeToParcel(Parcel dest, int flags) {
-		dest.writeLong(id);
-		dest.writeString(data);
+		dest.writeParcelable(article, flags);
 		dest.writeString(uri);
 	}
 
@@ -77,8 +62,7 @@ public class DataRequest implements Parcelable {
 	};
 
 	public DataRequest( Parcel in){
-		id		= in.readLong();
-		data	= in.readString();
+		article	= (Article)in.readParcelable(Article.class.getClassLoader());
 		uri		= in.readString();
 	}
 }

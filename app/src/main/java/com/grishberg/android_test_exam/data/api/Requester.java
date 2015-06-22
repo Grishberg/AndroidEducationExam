@@ -3,6 +3,7 @@ package com.grishberg.android_test_exam.data.api;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -10,6 +11,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.grishberg.android_test_exam.AppController;
 import com.grishberg.android_test_exam.data.api.request.DataRequest;
+import com.grishberg.android_test_exam.data.api.request.DeleteDataRequest;
 import com.grishberg.android_test_exam.data.api.response.DataResponse;
 import com.grishberg.android_test_exam.data.containers.Article;
 import com.grishberg.android_test_exam.data.containers.Category;
@@ -31,8 +33,8 @@ public class Requester {
 	public Requester() {
 	}
 
-	public DataResponse getCategories(DataRequest request) {
-		//TODO:start volley
+	public DataResponse getCategories() {
+
 		RestClient restClient = new RestClient();
 		String url = getCategoriesUrl();
 		ApiResponse response = restClient.doGet(url);
@@ -52,13 +54,12 @@ public class Requester {
 	}
 
 
-	public DataResponse getArticles(DataRequest request) {
+	public DataResponse getArticles() {
 
-		//TODO:start volley
-		RestClient restClient = new RestClient();
-		String url = getArticlesUrl();
-		ApiResponse response = restClient.doGet(url);
-		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss Z").create();
+		RestClient restClient 	= new RestClient();
+		String url 				= getArticlesUrl();
+		ApiResponse response 	= restClient.doGet(url);
+		Gson gson 				= getGson();
 		ArticlesContainer articlesContainer = deSerealize(gson, response, ArticlesContainer.class);
 
 		// store to base
@@ -85,22 +86,22 @@ public class Requester {
 			}
 
 			// delete articles, than not exists in server
-			for(long id: ids){
-				AppController.getAppContext().getContentResolver()
-						.delete(AppContentProvider.getArticlesUri(id), null, null);
-			}
+			AppController.getAppContext().getContentResolver()
+					.delete(AppContentProvider.getArticlesUri()
+							, formatArrayCondition(DbHelper.COLUMN_ID, ids), null);
 		}
 		return new DataResponse();
 	}
 
 	public DataResponse addArticle(DataRequest request) {
 		long id	= -1;
-		//TODO:start volley
 		RestClient restClient	= new RestClient();
 		String url				= putArticleUrl();
-		Gson gson				= new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss Z").create();
-		ApiResponse response	= restClient.doPost(url, null, request.getData());
-		ArticleContainer responseContainer = deSerealize(gson, response, ArticleContainer.class);
+		Gson gsonSerializer		= new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
+		String jsonContent 		= gsonSerializer.toJson(request.getArticle());
+		Gson gsonDeserialazer	= getGson();
+		ApiResponse response	= restClient.doPost(url, null, jsonContent);
+		ArticleContainer responseContainer = deSerealize(gsonDeserialazer, response, ArticleContainer.class);
 
 		if(responseContainer != null && responseContainer.article != null){
 			//insert into db
@@ -112,39 +113,47 @@ public class Requester {
 			if(!TextUtils.isEmpty(request.getAdditionalData())){
 				addPhotoToArticle(id, request.getAdditionalData());
 			}
+
 			Log.d(TAG, "article succesful sended");
 		}
 
 		return new DataResponse(id);
 	}
 
-	public DataResponse deleteArticle(DataRequest request) {
-		long id	= -1;
-		//TODO:start volley
-		RestClient restClient	= new RestClient();
-		String url				= deleteArticleUrl(request.getId());
+	public DataResponse deleteArticle(DeleteDataRequest articleId) {
 
+		long id					= articleId.getId();
+		String url				= deleteArticleUrl( id );
+		RestClient restClient	= new RestClient();
 		ApiResponse response	= restClient.doDelete(url);
 
 		if(response.status == 200){
 			//delete in db
-			id	= request.getId();
 			AppController.getAppContext().getContentResolver()
-					.delete(AppContentProvider.getArticlesUri(request.getId()), null, null);
+					.delete(AppContentProvider.getArticlesUri(id), null, null);
 			Log.d(TAG, "article succesful edited");
+		} else {
+			return new DataResponse(-1);
 		}
 
 		return new DataResponse(id);
 	}
 
 	public DataResponse editArticle(DataRequest request) {
-		long id	= -1;
-		//TODO:start volley
-		RestClient restClient	= new RestClient();
-		String url				= editArticleUrl(request.getId());
-		Gson gson				= new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss Z").create();
 
-		ApiResponse response	= restClient.doPut(url, request.getData());
+		if(request.getArticle() == null){
+			// bad request object
+			return new DataResponse(-1);
+		}
+
+		long 		id				= request.getArticle().getId();
+		String 		url				= editArticleUrl(id);
+		Gson 		gsonSerializer	= new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		String 		jsonContent 	= gsonSerializer.toJson(request.getArticle());
+		RestClient	restClient		= new RestClient();
+		Gson 		gson			= getGson();
+
+		ApiResponse response		= restClient.doPut(url, jsonContent);
 		ArticleContainer responseContainer = deSerealize(gson, response, ArticleContainer.class);
 
 		if(responseContainer != null && responseContainer.article != null){
@@ -157,19 +166,22 @@ public class Requester {
 				addPhotoToArticle(id, request.getAdditionalData());
 			}
 			Log.d(TAG, "article succesful edited");
+		} else {
+			new DataResponse(-1);
 		}
 
 		return new DataResponse(id);
 	}
 
 	private void addPhotoToArticle(long id, String imagePath) {
-		RestClient restClient				= new RestClient();
-		String url							= addImageUrl(id);
-		Gson gson							= new Gson();
-		Uri uri								= Uri.parse(imagePath);
-		File file							= new File(Utils.getFileNameByUri(AppController.getAppContext(),uri));
-		String response						= restClient.doUploadFile2(url, file, "photo[image]");
-		PhotoContainer responseContainer	= deSerealize(gson, response, PhotoContainer.class);
+
+		RestClient 		restClient			= new RestClient();
+		String 			url					= addImageUrl(id);
+		Gson 			gson				= new Gson();
+		Uri 			uri					= Uri.parse(imagePath);
+		File 			file				= new File(Utils.getFileNameByUri(AppController.getAppContext(),uri));
+		String 			response			= restClient.doUploadFile(url, file, "photo[image]");
+		PhotoContainer 	responseContainer	= deSerealize(gson, response, PhotoContainer.class);
 
 		if(responseContainer != null && responseContainer.photo != null) {
 			//update in db
@@ -182,6 +194,10 @@ public class Requester {
 		}
 	}
 
+	@NonNull
+	private Gson getGson() {
+		return new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss Z").create();
+	}
 
 	private String getCategoriesUrl(){
 		return SERVER + "categories.json";
@@ -205,7 +221,24 @@ public class Requester {
 
 	private String addImageUrl(long id){
 		return SERVER + String.format("articles/%d/photos.json",id);
+	}
 
+	private String formatArrayCondition(String field, ArrayList<Long> ids){
+		StringBuilder result = new StringBuilder();
+
+		result.append(field);
+		result.append(" in (");
+
+		for (int i = 0; i< ids.size(); i++){
+			if(i > 0) {
+				result.append(", ");
+			}
+			result.append(ids.get(i).toString());
+		}
+
+		result.append(" ) ");
+
+		return result.toString();
 	}
 
 	private static  class CategoriesContainer{
@@ -229,10 +262,10 @@ public class Requester {
 	}
 
 	private  <T> T deSerealize(Gson gson, ApiResponse response, Class<T> classOfT){
+
 		if(response != null){
 			try {
-				return gson.fromJson(response.getInputStreamReader()
-						, classOfT);
+				return gson.fromJson(response.getInputStreamReader(), classOfT);
 			} catch (Exception e){
 				e.printStackTrace();
 				return null;

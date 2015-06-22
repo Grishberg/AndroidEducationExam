@@ -75,6 +75,7 @@ public class TopicListFragment extends BaseFragment
 	private String 							mArticlesSortOrder;
 	private String 							mCategoriesSortOrder;
 	private String							mChildArticlesSortOrder;
+	private boolean							mFirstLaunch;
 
 	public static TopicListFragment newInstance() {
 		TopicListFragment fragment = new TopicListFragment();
@@ -158,7 +159,7 @@ public class TopicListFragment extends BaseFragment
 		mArticlesSortOrder		= DbHelper.ARTICLES_UPDATED + " DESC ";
 		mCategoriesSortOrder	= DbHelper.CATEGORIES_TITLE + " ASC ";
 		mChildArticlesSortOrder	= DbHelper.ARTICLES_UPDATED	+ " DESC ";
-
+		mFirstLaunch			= true;
 		fillData();
 		return view;
 	}
@@ -319,7 +320,6 @@ public class TopicListFragment extends BaseFragment
 			}
 		} else {
 			// child loaders
-			//TODO: через бандл передать ид группы, для поиска всех детей с данной группой
 			// filter items
 			String selection = null;
 			String[] selectionArgs = null;
@@ -346,6 +346,7 @@ public class TopicListFragment extends BaseFragment
 			switch (loader.getId()){
 				case ARTICLES_LOADER:
 					mListViewCursorAdapter.swapCursor(data);
+					notifyArticlePanel(data);
 					break;
 				case CATEGORIES_LOADER:
 					mListViewExAdapter.setGroupCursor(data);
@@ -369,6 +370,16 @@ public class TopicListFragment extends BaseFragment
 			mListViewCursorAdapter.changeCursor(null);
 		}
 
+	}
+
+
+	private void notifyArticlePanel(Cursor data){
+		if(mFirstLaunch && mListener != null){
+			if(data.moveToFirst()){
+				mFirstLaunch = false;
+				mListener.onItemClicked( data.getLong( data.getColumnIndex(DbHelper.COLUMN_ID )) );
+			}
+		}
 	}
 
 	// spinner listview type changed

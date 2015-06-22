@@ -43,12 +43,8 @@ public class AppContentProvider extends ContentProvider {
 		return CONTENT_URI_ARTICLES;
 	}
 
-	public static Uri getArticlesUri(long id){
-		return Uri.parse(AppContentProvider.CONTENT_URI_ARTICLES + "/" + id);
-	}
-
-	public static Uri getArticlesUri(String id){
-		return Uri.parse(AppContentProvider.CONTENT_URI_ARTICLES + "/" + id);
+	public static Uri getArticlesUri(Long id){
+		return Uri.withAppendedPath(AppContentProvider.CONTENT_URI_ARTICLES, id.toString());
 	}
 
 	public synchronized static DbHelper getDbHelper(Context context) {

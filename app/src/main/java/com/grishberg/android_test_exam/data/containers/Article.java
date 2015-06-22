@@ -2,21 +2,25 @@ package com.grishberg.android_test_exam.data.containers;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import com.grishberg.android_test_exam.data.model.DbHelper;
 
+import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.Date;
 
 /**
  * Created by grigoriy on 16.06.15.
  */
-public class Article {
+public class Article implements Parcelable{
 	private long			id;
 	@Expose
 	private String			title;
@@ -26,10 +30,25 @@ public class Article {
 	@Expose
 	private boolean 		published;
 	@Expose
-	private long			category_id;
-	private Date			created_at;
-	private Date			updated_at;
+	@SerializedName("category_id")
+	private long			categoryId;
+	@SerializedName("created_at")
+	private Date 			createdAt;
+	@SerializedName("updated_at")
+	private Date 			updatedAt;
 	private boolean			own;
+
+	public Article(long id) {
+
+		this.id		= id;
+		title		= null;
+		description	= null;
+		photo		= new PhotoContainer("");
+		createdAt	= null;
+		updatedAt	= null;
+		own			= false;
+		published	= false;
+	}
 
 	public Article(long id
 			, String title, String description, String photoUrl, boolean isPublished
@@ -39,9 +58,9 @@ public class Article {
 		this.description	= description;
 		this.photo			= new PhotoContainer(photoUrl);
 		this.published		= isPublished;
-		this.category_id	= categoryId;
-		this.created_at		= new Date(created);
-		this.updated_at		= new Date(updated);
+		this.categoryId		= categoryId;
+		this.createdAt 		= new Date(created);
+		this.updatedAt 		= new Date(updated);
 		this.own			= own;
 
 	}
@@ -57,9 +76,9 @@ public class Article {
 			cv.put(DbHelper.ARTICLES_PHOTO_URL, photo.getUrl());
 		}
 		cv.put(DbHelper.ARTICLES_PUBLISHED,		published);
-		cv.put(DbHelper.ARTICLES_CATEGORY_ID, 	category_id);
-		cv.put(DbHelper.ARTICLES_CREATED, 		created_at.getTime());
-		cv.put(DbHelper.ARTICLES_UPDATED, 		updated_at.getTime());
+		cv.put(DbHelper.ARTICLES_CATEGORY_ID, 	categoryId);
+		cv.put(DbHelper.ARTICLES_CREATED, 		createdAt.getTime());
+		cv.put(DbHelper.ARTICLES_UPDATED, 		updatedAt.getTime());
 		cv.put(DbHelper.ARTICLES_OWN,			own);
 
 		return cv;
@@ -112,35 +131,63 @@ public class Article {
 	}
 
 	public long getCategoryId() {
-		return category_id;
+		return categoryId;
 	}
 
 
 	public Date getCreated() {
-		return created_at;
+		return createdAt;
 	}
 
 	public Date getUpdated() {
-		return updated_at;
+		return updatedAt;
 	}
 
 	public boolean getIsMine() {
 		return own;
 	}
 
-	public static class ArticlefSerializer implements JsonSerializer<Article>
-	{
-		@Override
-		public JsonElement serialize(Article src, Type typeOfSrc, JsonSerializationContext context)
-		{
-			JsonObject result = new JsonObject();
-			result.addProperty("title", src.getTitle());
-			result.addProperty("description", src.getDescription());
-			result.addProperty("published", src.isPublished());
-			result.addProperty("category_id", src.getCategoryId());
+	//---------------- Parcelable ------------------
 
-			//result.add("Article", fields);
-			return result;
-		}
+	public Article(Parcel in){
+
+		id			= in.readLong();
+		title		= in.readString();
+		description	= in.readString();
+		photo		= (PhotoContainer)in.readParcelable(PhotoContainer.class.getClassLoader());
+		published	= in.readInt() == 1;
+		categoryId	= in.readLong();
+		createdAt	= new Date( in.readLong() );
+		updatedAt	= new Date( in.readLong() );
+		own			= in.readInt() == 1;
 	}
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeLong(id);
+		dest.writeString( title );
+		dest.writeString( description );
+		dest.writeParcelable( photo, flags);
+		dest.writeInt(published ? 1 : 0);
+		dest.writeLong( createdAt.getTime());
+		dest.writeLong(updatedAt.getTime());
+		dest.writeInt(own ? 1 : 0);
+	}
+
+	public static final Parcelable.Creator<Article> CREATOR = new Parcelable.Creator<Article>() {
+		// распаковываем объект из Parcel
+		public Article createFromParcel(Parcel in) {
+			return new Article(in);
+		}
+
+		public Article[] newArray(int size) {
+			return new Article[size];
+		}
+	};
+
 }

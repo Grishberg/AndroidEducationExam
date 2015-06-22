@@ -180,108 +180,9 @@ public class RestClient {
 		return apiResponse;
 	}
 
+
+
 	public String doUploadFile(String urlString, File file, String fileParameterName) {
-		HttpURLConnection conn				= null;
-		DataOutputStream dos				= null;
-		DataInputStream dis					= null;
-		FileInputStream fileInputStream		= null;
-		HashMap<String, String> parameters	= new HashMap<>();
-		StringBuilder  stringBuilder		= new StringBuilder();
-		byte[] buffer;
-		int maxBufferSize = 20 * 1024;
-		try {
-			// ------------------ CLIENT REQUEST
-			fileInputStream = new FileInputStream(file);
-
-			// open a URL connection to the Servlet
-			// Open a HTTP connection to the URL
-			URL url	= new URL(urlString);
-			conn = (HttpURLConnection) url.openConnection();
-			// Allow Inputs
-			conn.setDoInput(true);
-			// Allow Outputs
-			conn.setDoOutput(true);
-			// Don't use a cached copy.
-			conn.setUseCaches(false);
-			// Use a post method.
-			conn.setRequestMethod("POST");
-			conn.setRequestProperty("Authorization", "Token token=" + API_KEY);
-			conn.setRequestProperty("Content-Type", "application/json");
-			conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary + "; charset=UTF-8");
-			dos = new DataOutputStream(conn.getOutputStream());
-
-			dos.writeBytes(twoHyphens + boundary + lineEnd);
-			dos.writeBytes("Content-Disposition: form-data; name=\""
-					+ fileParameterName + "\"; filename=\"" + file.getName()
-					+ "\"" + lineEnd);
-			dos.writeBytes("Content-Type:image/jpg" + lineEnd);
-			dos.writeBytes(lineEnd);
-
-			// create a buffer of maximum size
-			buffer = new byte[Math.min((int) file.length(), maxBufferSize)];
-			int length;
-			// read file and write it into form...
-			while ((length = fileInputStream.read(buffer)) != -1) {
-				dos.write(buffer, 0, length);
-			}
-
-			for (String name : parameters.keySet()) {
-				dos.writeBytes(lineEnd);
-				dos.writeBytes(twoHyphens + boundary + lineEnd);
-				dos.writeBytes("Content-Disposition: form-data; name=\""
-						+ name + "\"" + lineEnd);
-				dos.writeBytes(lineEnd);
-				dos.writeBytes(parameters.get(name));
-			}
-
-			// send multipart form data necessary after file data...
-			dos.writeBytes(lineEnd);
-			dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
-			dos.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		finally
-		 {
-			 try {
-				 if (fileInputStream != null){
-					fileInputStream.close();
-				}
-				if (dos != null)
-					dos.close();
-			 } catch (Exception e) {}
-		}
-
-		// ------------------ read the SERVER RESPONSE
-		try {
-			int responseCode		= conn.getResponseCode();
-			String responseMessage	= conn.getResponseMessage();
-			conn.connect();
-			dis = new DataInputStream(conn.getInputStream());
-			StringBuilder response = new StringBuilder();
-
-			String line;
-			while ((line = dis.readLine()) != null) {
-				response.append(line).append('\n');
-			}
-
-			System.out.println("Upload file responce:"
-					+ response.toString());
-			return response.toString();
-		} catch (IOException e){
-			e.printStackTrace();
-		}
-		finally {
-			if (dis != null) {
-				try {
-					dis.close();
-				} catch (IOException e) {}
-			}
-		}
-		return null;
-	}
-
-	public String doUploadFile2(String urlString, File file, String fileParameterName) {
 		HttpURLConnection conn				= null;
 		DataOutputStream dos				= null;
 		DataInputStream dis					= null;
@@ -318,7 +219,6 @@ public class RestClient {
 			conn.setRequestMethod("POST");
 			conn.setRequestProperty("Authorization", "Token token=" + API_KEY);
 			conn.setRequestProperty("Content-Type", "application/json");
-
 			conn.addRequestProperty(httpentity.getContentType().getName(), httpentity.getContentType().getValue());
 			dos = new DataOutputStream(conn.getOutputStream());
 			httpentity.writeTo(dos);
@@ -381,4 +281,107 @@ public class RestClient {
         httpRequest.setHeader("Accept-Encoding", "utf-8");
 	}
 
+	//TODO: make without MultipartBuilder
+	public String doUploadFile0(String urlString, File file, String fileParameterName) {
+		HttpURLConnection conn				= null;
+		DataOutputStream dos				= null;
+		DataInputStream dis					= null;
+		FileInputStream fileInputStream		= null;
+		HashMap<String, String> parameters	= new HashMap<>();
+		StringBuilder  stringBuilder		= new StringBuilder();
+		String result						= null;
+		byte[] buffer;
+		int maxBufferSize = 20 * 1024;
+		try {
+			// ------------------ CLIENT REQUEST
+			fileInputStream = new FileInputStream(file);
+
+			// open a URL connection to the Servlet
+			// Open a HTTP connection to the URL
+			URL url	= new URL(urlString);
+			conn = (HttpURLConnection) url.openConnection();
+			// Allow Inputs
+			conn.setDoInput(true);
+			// Allow Outputs
+			conn.setDoOutput(true);
+			// Don't use a cached copy.
+			conn.setUseCaches(false);
+			// Use a post method.
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Authorization", "Token token=" + API_KEY);
+			conn.setRequestProperty("Content-Type", "application/json");
+			conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary + "; charset=UTF-8");
+
+			dos = new DataOutputStream(conn.getOutputStream());
+
+			dos.writeBytes(twoHyphens + boundary + lineEnd);
+			dos.writeBytes("Content-Disposition: form-data; name=\""
+					+ fileParameterName + "\"; filename=\"" + file.getName()
+					+ "\"" + lineEnd);
+			dos.writeBytes("Content-Type:image/jpg" + lineEnd);
+			dos.writeBytes(lineEnd);
+
+			// create a buffer of maximum size
+			buffer = new byte[Math.min((int) file.length(), maxBufferSize)];
+			int length;
+			// read file and write it into form...
+			while ((length = fileInputStream.read(buffer)) != -1) {
+				dos.write(buffer, 0, length);
+			}
+
+			for (String name : parameters.keySet()) {
+				dos.writeBytes(lineEnd);
+				dos.writeBytes(twoHyphens + boundary + lineEnd);
+				dos.writeBytes("Content-Disposition: form-data; name=\""
+						+ name + "\"" + lineEnd);
+				dos.writeBytes(lineEnd);
+				dos.writeBytes(parameters.get(name));
+			}
+
+			// send multipart form data necessary after file data...
+			dos.writeBytes(lineEnd);
+			dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+			dos.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		finally
+		{
+			try {
+				if (fileInputStream != null){
+					fileInputStream.close();
+				}
+				if (dos != null)
+					dos.close();
+			} catch (Exception e) {}
+		}
+
+		// ------------------ read the SERVER RESPONSE
+		try {
+			int responseCode		= conn.getResponseCode();
+			String responseMessage	= conn.getResponseMessage();
+			conn.connect();
+			dis = new DataInputStream(conn.getInputStream());
+			StringBuilder response = new StringBuilder();
+
+			String line;
+			while ((line = dis.readLine()) != null) {
+				response.append(line).append('\n');
+			}
+
+			System.out.println("Upload file responce:"
+					+ response.toString());
+			result	= response.toString();
+		} catch (IOException e){
+			e.printStackTrace();
+		}
+		finally {
+			if (dis != null) {
+				try {
+					dis.close();
+				} catch (IOException e) {}
+			}
+		}
+		return result;
+	}
 }

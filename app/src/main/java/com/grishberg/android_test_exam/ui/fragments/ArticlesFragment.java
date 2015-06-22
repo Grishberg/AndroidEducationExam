@@ -69,8 +69,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 
 	private IArticleFragmentInteractionListener mListener;
 	private long 				mArticleId;
-	private long 				mCreatedDate;
-	private String					mImagePath;
+	private String				mImagePath;
 	private ArrayList<Category> mCategories;
 	String[] 					mArticlesProjection;
 	String[] 					mCategoriesProjection;
@@ -87,6 +86,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 	private Spinner		mSpinner;
 	private Switch		mIsPublishedSwitch;
 	private ImageView	mImage;
+	private	boolean		mImageChanged;
 
 	public static ArticlesFragment newInstance(long articleId) {
 		ArticlesFragment fragment = new ArticlesFragment();
@@ -304,39 +304,33 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 				Bitmap bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
 				// Log.d(TAG, String.valueOf(bitmap));
 				mImage.setImageBitmap(bitmap);
-				mImagePath = uri.toString();
+				mImagePath		= uri.toString();
+				mImageChanged	= true;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
+
 	/**
 	 * event user click on save article button
 	 */
 	private void onSavePressed(){
 		String title		= mTitleEdit.getText().toString();
 		String description	= mDescriptionEdit.getText().toString();
-		long updated		= (new Date()).getTime();
 		long categoryId		= mCategories.get(mSpinner.getSelectedItemPosition()).getId();
-		if (mCreatedDate == 0) mCreatedDate = updated;
 
 		if (description.length() == 0 || title.length() == 0) {
 			return;
 		}
 
-		Article article 	= new Article(-1,title, description, "", true, categoryId
+		Article article 	= new Article(mArticleId,title, description, "", true, categoryId
 				, 0,0,true);
-
-		Gson gson =  new GsonBuilder()
-				.setPrettyPrinting()
-				.registerTypeAdapter(Article.class, new Article.ArticlefSerializer())
-				.create();
-		String jsonContent	= gson.toJson(article);
 
 		//  save to server
 		if( mArticleId < 0) {
 			// add new article
-			addArticleRequest(jsonContent, mImagePath, new IResponseListener() {
+			addArticleRequest(article, mImageChanged ? mImagePath : null, new IResponseListener() {
 				@Override
 				public void onResponse(long id) {
 					mArticleId = id;
@@ -345,7 +339,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 
 		} else {
 			// edit my article
-			editArticleRequest(mArticleId,jsonContent,mImagePath, null, null);
+			editArticleRequest(article, mImageChanged ? mImagePath : null, null, null);
 		}
 	}
 
@@ -386,7 +380,8 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 	 * clear UI fields
 	 */
 	private void clearFields(){
-		mImagePath	= null;
+		mImagePath		= null;
+		mImageChanged	= false;
 		mTitleEdit.setText("");
 		mDescriptionEdit.setText("");
 		mSpinner.setSelection(0);
