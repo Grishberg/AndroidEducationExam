@@ -344,7 +344,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 
 		} else {
 			// edit my article
-			editArticleRequest(mArticleId,mImagePath, jsonContent, null, null);
+			editArticleRequest(mArticleId,jsonContent,mImagePath, null, null);
 		}
 	}
 
