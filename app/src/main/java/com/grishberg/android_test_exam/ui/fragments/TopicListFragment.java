@@ -110,7 +110,13 @@ public class TopicListFragment extends BaseFragment
 
 		//init ExpandableListView
 		mListViewEx	= (ExpandableListView) view.findViewById(R.id.fragment_topiclist_explistview);
-
+		mListViewEx.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+			@Override
+			public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+				onListViewItemClicked(id);
+				return false;
+			}
+		});
 		// refresh button
 		view.findViewById(R.id.fragment_topiclist_button_refresh).setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -283,13 +289,13 @@ public class TopicListFragment extends BaseFragment
 
 	@Override
 	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-
+		String selection = null;
+		String[] selectionArgs = null;
 		if (id < ARTICLES_CHILD_LOADER) {
 			switch (id) {
 				case ARTICLES_LOADER:
 					// filter items
-					String selection = null;
-					String[] selectionArgs = null;
+
 					if (args != null) {
 						selection = args.getString(ARGS_SELECTION);
 						selectionArgs = args.getStringArray(ARGS_SELECTION_ARGUMENTS);
@@ -308,7 +314,7 @@ public class TopicListFragment extends BaseFragment
 					// Returns a new CursorLoader
 					return new CursorLoader(
 							getActivity(),   // Parent activity context
-							AppContentProvider.CONTENT_URI_CATEGORIES, // Table to query
+							AppContentProvider.CONTENT_URI_CATEGORIES_NOT_EMPTY, // Table to query
 							mCategoryProjection,     // Projection to return
 							null,            // No selection clause
 							null,            // No selection arguments

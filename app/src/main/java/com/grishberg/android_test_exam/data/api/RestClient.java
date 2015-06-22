@@ -199,7 +199,8 @@ public class RestClient {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			entity.addPart(fileParameterName, new FileBody(file, ContentType.create("image/jpeg"), file.getName()));
+			entity.addPart(fileParameterName, new FileBody(file, ContentType.create("image/jpeg")
+					, file.getName()));
 			httpentity = entity.build();
 
 			// ------------------ CLIENT REQUEST
@@ -222,7 +223,7 @@ public class RestClient {
 			conn.addRequestProperty(httpentity.getContentType().getName(), httpentity.getContentType().getValue());
 			dos = new DataOutputStream(conn.getOutputStream());
 			httpentity.writeTo(dos);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		finally
@@ -233,7 +234,9 @@ public class RestClient {
 				}
 				if (dos != null)
 					dos.close();
-			} catch (Exception e) {}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
 		// ------------------ read the SERVER RESPONSE

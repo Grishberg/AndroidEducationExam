@@ -35,19 +35,46 @@ public class Requester {
 
 	public DataResponse getCategories() {
 
-		RestClient restClient = new RestClient();
-		String url = getCategoriesUrl();
-		ApiResponse response = restClient.doGet(url);
+		RestClient restClient 	= new RestClient();
+		String url 				= getCategoriesUrl();
+		ApiResponse response 	= restClient.doGet(url);
 		Gson gson = new Gson();
 
-		CategoriesContainer categoriesResponse = deSerealize(gson
+		CategoriesContainer responseContainer = deSerealize(gson
 				, response
 				, CategoriesContainer.class);
 
-		if(categoriesResponse != null){
-			for (Category category: categoriesResponse.categories){
+		if(responseContainer != null){
+			// synchronize categories with DB
+
+			ArrayList<Long> ids = new ArrayList<>();
+			// delete categories, that not exists in server's categories list
+			// 1) retrive categories ID  from DB
+			Cursor cursor	= AppController.getAppContext().getContentResolver()
+					.query(AppContentProvider.CONTENT_URI_CATEGORIES
+							, new String[]{DbHelper.COLUMN_ID}
+							, null
+							, null
+							, null);
+			// 2) remove IDs from server's elements
+			while (cursor.moveToNext()){
+				ids.add(cursor.getLong( cursor.getColumnIndex(DbHelper.COLUMN_ID)) );
+			}
+			cursor.close();
+
+			// 3) delete excess elements from db
+			for (Category category: responseContainer.categories){
+				ids.remove(category.getId());
+
 				AppController.getAppContext().getContentResolver()
 						.insert(AppContentProvider.CONTENT_URI_CATEGORIES, category.buildContentValues());
+			}
+
+			// delete categories, than not exists in server
+			if(ids.size() > 0) {
+				AppController.getAppContext().getContentResolver()
+						.delete(AppContentProvider.CONTENT_URI_CATEGORIES
+								, formatArrayCondition(DbHelper.COLUMN_ID, ids), null);
 			}
 		}
 		return new DataResponse();
@@ -60,10 +87,10 @@ public class Requester {
 		String url 				= getArticlesUrl();
 		ApiResponse response 	= restClient.doGet(url);
 		Gson gson 				= getGson();
-		ArticlesContainer articlesContainer = deSerealize(gson, response, ArticlesContainer.class);
+		ArticlesContainer responseContainer = deSerealize(gson, response, ArticlesContainer.class);
 
 		// store to base
-		if(articlesContainer != null && articlesContainer.articles != null){
+		if(responseContainer != null && responseContainer.articles != null){
 			ArrayList<Long> ids = new ArrayList<>();
 			// delete articles, that not exists in server's articles list
 			Cursor cursor	= AppController.getAppContext().getContentResolver()
@@ -78,7 +105,7 @@ public class Requester {
 
 			cursor.close();
 
-			for (Article article: articlesContainer.articles){
+			for (Article article: responseContainer.articles){
 				ids.remove(article.getId());
 
 				AppController.getAppContext().getContentResolver()
@@ -86,9 +113,11 @@ public class Requester {
 			}
 
 			// delete articles, than not exists in server
-			AppController.getAppContext().getContentResolver()
-					.delete(AppContentProvider.getArticlesUri()
-							, formatArrayCondition(DbHelper.COLUMN_ID, ids), null);
+			if(ids.size() > 0) {
+				AppController.getAppContext().getContentResolver()
+						.delete(AppContentProvider.getArticlesUri()
+								, formatArrayCondition(DbHelper.COLUMN_ID, ids), null);
+			}
 		}
 		return new DataResponse();
 	}
@@ -97,7 +126,8 @@ public class Requester {
 		long id	= -1;
 		RestClient restClient	= new RestClient();
 		String url				= putArticleUrl();
-		Gson gsonSerializer		= new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
+		Gson gsonSerializer		= new GsonBuilder().excludeFieldsWithoutExposeAnnotation()
+				.setPrettyPrinting().create();
 		String jsonContent 		= gsonSerializer.toJson(request.getArticle());
 		Gson gsonDeserialazer	= getGson();
 		ApiResponse response	= restClient.doPost(url, null, jsonContent);
@@ -123,7 +153,7 @@ public class Requester {
 	public DataResponse deleteArticle(DeleteDataRequest articleId) {
 
 		long id					= articleId.getId();
-		String url				= deleteArticleUrl( id );
+		String url				= deleteArticleUrl(id);
 		RestClient restClient	= new RestClient();
 		ApiResponse response	= restClient.doDelete(url);
 
@@ -179,7 +209,8 @@ public class Requester {
 		String 			url					= addImageUrl(id);
 		Gson 			gson				= new Gson();
 		Uri 			uri					= Uri.parse(imagePath);
-		File 			file				= new File(Utils.getFileNameByUri(AppController.getAppContext(),uri));
+		File 			file				= new File(Utils.getPath(AppController.getAppContext()
+												,uri));
 		String 			response			= restClient.doUploadFile(url, file, "photo[image]");
 		PhotoContainer 	responseContainer	= deSerealize(gson, response, PhotoContainer.class);
 

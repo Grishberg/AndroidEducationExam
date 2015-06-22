@@ -174,6 +174,7 @@ public class Article implements Parcelable{
 		dest.writeString( description );
 		dest.writeParcelable( photo, flags);
 		dest.writeInt(published ? 1 : 0);
+		dest.writeLong(categoryId);
 		dest.writeLong( createdAt.getTime());
 		dest.writeLong(updatedAt.getTime());
 		dest.writeInt(own ? 1 : 0);

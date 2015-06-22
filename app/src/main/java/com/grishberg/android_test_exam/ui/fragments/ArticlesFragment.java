@@ -224,6 +224,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 	 */
 	private void addCategoriesFromCursor(Cursor cursor){
 
+		mCategories = new ArrayList<>();
 		while (cursor.moveToNext()) {
 			Category category	= Category.fromCursor(cursor);
 			mCategories.add(category);
@@ -302,7 +303,6 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 
 			try {
 				Bitmap bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
-				// Log.d(TAG, String.valueOf(bitmap));
 				mImage.setImageBitmap(bitmap);
 				mImagePath		= uri.toString();
 				mImageChanged	= true;
@@ -311,6 +311,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 			}
 		}
 	}
+
 
 	/**
 	 * event user click on save article button
@@ -405,6 +406,7 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 		if( spinnerSelection >= 0){
 			mSpinner.setSelection(spinnerSelection);
 		}
+
 		if(!TextUtils.isEmpty(currentArticle.getPhotoUrl() )){
 			Picasso.with(getActivity()).load(currentArticle.getPhotoUrl()).into(mImage);
 		}else {
@@ -412,7 +414,9 @@ public class ArticlesFragment extends BaseFragment implements IActivityArticleIn
 		}
 
 		// can we edit article?
-		mEditButton.setEnabled(currentArticle.getIsMine());
+		mEditButton.setEnabled( currentArticle.getIsMine() );
+		mViewButton.setEnabled(false);
+		mAddImageButton.setEnabled( false );
 		cursor.close();
 	}
 

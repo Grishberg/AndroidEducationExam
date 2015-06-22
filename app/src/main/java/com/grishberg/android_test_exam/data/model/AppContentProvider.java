@@ -20,13 +20,16 @@ public class AppContentProvider extends ContentProvider {
 
 	private static final String PATH_CATEGORIES		= DbHelper.TABLE_CATEGORIES;
 	private static final String PATH_ARTICLES		= DbHelper.TABLE_ARTICLES;
+	private static final String PATH_CATEGORIES_NOT_EMPTY	= "notEmptyCategories";
 
 	public static final Uri CONTENT_URI_CATEGORIES	= Uri.parse("content://" + AUTHORITY + "/" + PATH_CATEGORIES);
 	public static final Uri CONTENT_URI_ARTICLES	= Uri.parse("content://" + AUTHORITY + "/" + PATH_ARTICLES);
+	public static final Uri CONTENT_URI_CATEGORIES_NOT_EMPTY	= Uri.parse("content://" + AUTHORITY + "/" + PATH_CATEGORIES_NOT_EMPTY);
 
 	private static final int CODE_CATEGORIES		= 0;
 	private static final int CODE_ARTICLES			= 1;
 	private static final int CODE_ARTICLES_ID		= 2;
+	private static final int CODE_CATEGORIES_NOT_EMPTY	= 3;
 
 	private static final UriMatcher URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -34,6 +37,7 @@ public class AppContentProvider extends ContentProvider {
 		URI_MATCHER.addURI(AUTHORITY, PATH_CATEGORIES, 		CODE_CATEGORIES);
 		URI_MATCHER.addURI(AUTHORITY, PATH_ARTICLES, 		CODE_ARTICLES);
 		URI_MATCHER.addURI(AUTHORITY, PATH_ARTICLES+ "/#", 	CODE_ARTICLES_ID);
+		URI_MATCHER.addURI(AUTHORITY, PATH_CATEGORIES_NOT_EMPTY,	CODE_CATEGORIES_NOT_EMPTY);
 	}
 
 	private static DbHelper dbHelper;
@@ -79,6 +83,10 @@ public class AppContentProvider extends ContentProvider {
 						.query(DbHelper.TABLE_ARTICLES, projection
 								, DbHelper.COLUMN_ID + " = ?"
 								, new String[] { uri.getLastPathSegment() }, null, null, sortOrder);
+				break;
+
+			case CODE_CATEGORIES_NOT_EMPTY:
+				cursor	= getCategories();
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -206,7 +214,29 @@ public class AppContentProvider extends ContentProvider {
 
 	private Cursor getCategories(){
 		SQLiteDatabase db = dbHelper.getReadableDatabase();
-		String sql = "select ...";
+		StringBuilder sqlBuilder = new StringBuilder("SELECT art.");
+		sqlBuilder.append(DbHelper.ARTICLES_CATEGORY_ID);
+		sqlBuilder.append(" AS ");
+		sqlBuilder.append(DbHelper.COLUMN_ID);
+		sqlBuilder.append(", cat.");
+		sqlBuilder.append(DbHelper.CATEGORIES_TITLE);
+		sqlBuilder.append(" FROM ");
+		sqlBuilder.append(DbHelper.TABLE_ARTICLES);
+		sqlBuilder.append(" AS art INNER JOIN ");
+		sqlBuilder.append(DbHelper.TABLE_CATEGORIES);
+		sqlBuilder.append(" AS cat ON art.");
+		sqlBuilder.append(DbHelper.ARTICLES_CATEGORY_ID);
+		sqlBuilder.append(" = cat.");
+		sqlBuilder.append(DbHelper.COLUMN_ID);
+		sqlBuilder.append(" GROUP BY art.");
+		sqlBuilder.append(DbHelper.ARTICLES_CATEGORY_ID);
+
+		String sql = sqlBuilder.toString();
+		try{
+			Cursor c =db.rawQuery(sql, null);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
 		return db.rawQuery(sql, null);
 	}
 }
