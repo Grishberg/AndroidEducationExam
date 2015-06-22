@@ -75,6 +75,8 @@ public class Requester {
 				ids.add(cursor.getLong( cursor.getColumnIndex(DbHelper.COLUMN_ID)) );
 			}
 
+			cursor.close();
+
 			for (Article article: articlesContainer.articles){
 				ids.remove(article.getId());
 
