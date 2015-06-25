@@ -29,7 +29,8 @@ public abstract class BaseFragment extends Fragment {
 
 	public void getArticlesRequest(final IResponseListener	responseListener
 			, final IErrorListener		errorListener){
-		ApiServiceHelper.getInstance().getArticles(new ResultReceiver(new Handler()) {
+
+		ApiServiceHelper.getArticles(new ResultReceiver(new Handler()) {
 			@Override
 			protected void onReceiveResult(int resultCode, Bundle resultData) {
 				if (resultData.containsKey(ApiService.ERROR_KEY)) {
@@ -49,7 +50,7 @@ public abstract class BaseFragment extends Fragment {
 			, final IResponseListener	responseListener
 			, final IErrorListener		errorListener) {
 
-		ApiServiceHelper.getInstance().addArticle(new DataRequest(article, imagePath)
+		ApiServiceHelper.addArticle(new DataRequest(article, imagePath)
 				, new ResultReceiver(new Handler()) {
 
 			@Override
@@ -74,7 +75,7 @@ public abstract class BaseFragment extends Fragment {
 			, final IResponseListener	responseListener
 			, final IErrorListener		errorListener){
 
-		ApiServiceHelper.getInstance().editArticle(new DataRequest(article, imagePath), new ResultReceiver(new Handler()) {
+		ApiServiceHelper.editArticle(new DataRequest(article, imagePath), new ResultReceiver(new Handler()) {
 			@Override
 			protected void onReceiveResult(int resultCode, Bundle resultData) {
 				if (resultData.containsKey(ApiService.ERROR_KEY)) {
@@ -96,7 +97,7 @@ public abstract class BaseFragment extends Fragment {
 			, final IResponseListener	responseListener
 			, final IErrorListener		errorListener){
 
-		ApiServiceHelper.getInstance().deleteArticle(new DeleteDataRequest(id)
+		ApiServiceHelper.deleteArticle(new DeleteDataRequest(id)
 				, new ResultReceiver(new Handler()) {
 			@Override
 			protected void onReceiveResult(int resultCode, Bundle resultData) {
@@ -116,7 +117,7 @@ public abstract class BaseFragment extends Fragment {
 	public void getCategoriesRequest(final IResponseListener	responseListener
 			, final IErrorListener		errorListener){
 
-		ApiServiceHelper.getInstance().getCategories(new ResultReceiver(new Handler()) {
+		ApiServiceHelper.getCategories(new ResultReceiver(new Handler()) {
 			@Override
 			protected void onReceiveResult(int resultCode, Bundle resultData) {
 				if (resultData.containsKey(ApiService.ERROR_KEY)) {

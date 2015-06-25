@@ -9,6 +9,7 @@
     <string name="fragment_topiclist_filter_text">Filters:</string>
     <string name="fragment_topiclist_filter_onlymy">Only my</string>
     <string name="fragment_topiclist_filter_unpublished">unpublished</string>
+    <string name="fragment_topiclist_sorttype_button_text">Sort type</string>
 
     <string name="fragment_articles_view_mode_text">View</string>
     <string name="fragment_articles_edit_mode_text">Edit</string>
@@ -21,8 +22,15 @@
     <string name="listviewex_caption">expand listview</string>
 
     <string name="action_delete_listview_text">delete</string>
+    <string name="action_delete_sortorder_text">Select sort order</string>
+
     <string name="action_delete_listviewex_text">delete</string>
     <string name="fragment_action_select_image_text">Select image</string>
     <string name="fragment_action_image_type">image/*</string>
+    <string name="sort_dialog_title">Type of sorting</string>
+    <string name="sort_dialog_message">Sort by title , ID or updated time?</string>
+    <string name="sort_dialog_title_button_text">title</string>
+    <string name="sort_dialog_id_button_text">ID</string>
+    <string name="sort_dialog_updated_button_text">updated time</string>
 
 </resources>

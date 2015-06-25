@@ -2,6 +2,7 @@ package com.grishberg.android_test_exam.ui.fragments;
 
 import android.app.Activity;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -30,6 +31,7 @@ import com.grishberg.android_test_exam.R;
 import com.grishberg.android_test_exam.data.model.AppContentProvider;
 import com.grishberg.android_test_exam.data.model.DbHelper;
 import com.grishberg.android_test_exam.ui.adapters.EpxListViewCursorAdapter;
+import com.grishberg.android_test_exam.ui.dialogs.SortTypeDialog;
 import com.grishberg.android_test_exam.ui.listeners.IActivityAdapterInteraction;
 import com.grishberg.android_test_exam.ui.listeners.IActivityTopicListInteractionListener;
 import com.grishberg.android_test_exam.ui.listeners.ITopicListFragmentInteraction;
@@ -52,6 +54,8 @@ public class TopicListFragment extends BaseFragment
 	public static final int ARTICLES_LOADER			= 0;
 	public static final int CATEGORIES_LOADER 		= 1;
 	public static final int ARTICLES_CHILD_LOADER	= 2;
+
+	public static final int REQUEST_SORT_TYPE		= 1;
 
 	private static final String ARGS_SELECTION 				= "argsSelection";
 	private static final String ARGS_SELECTION_ARGUMENTS 	= "argsSelectionArguments";
@@ -76,6 +80,8 @@ public class TopicListFragment extends BaseFragment
 	private String 							mCategoriesSortOrder;
 	private String							mChildArticlesSortOrder;
 	private boolean							mFirstLaunch;
+
+	private SortTypeDialog 					mSortOrderDialog;
 
 	public static TopicListFragment newInstance() {
 		TopicListFragment fragment = new TopicListFragment();
@@ -162,6 +168,9 @@ public class TopicListFragment extends BaseFragment
 		// set projection
 		mProjection				= new String[] {DbHelper.COLUMN_ID, DbHelper.ARTICLES_TITLE};
 		mCategoryProjection		= new String[] {DbHelper.COLUMN_ID, DbHelper.CATEGORIES_TITLE};
+
+		mSortOrderDialog		= new SortTypeDialog();
+		mSortOrderDialog.setTargetFragment(this, REQUEST_SORT_TYPE);
 		mArticlesSortOrder		= DbHelper.ARTICLES_UPDATED + " DESC ";
 		mCategoriesSortOrder	= DbHelper.CATEGORIES_TITLE + " ASC ";
 		mChildArticlesSortOrder	= DbHelper.ARTICLES_UPDATED	+ " DESC ";
@@ -286,6 +295,9 @@ public class TopicListFragment extends BaseFragment
 
 		getLoaderManager().restartLoader(ARTICLES_LOADER, args, this);
 	}
+	void startSortOrderDialog(){
+		mSortOrderDialog.show(getFragmentManager(), SortTypeDialog.class.getName());
+	}
 
 	@Override
 	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -327,8 +339,7 @@ public class TopicListFragment extends BaseFragment
 		} else {
 			// child loaders
 			// filter items
-			String selection = null;
-			String[] selectionArgs = null;
+
 			if (args != null) {
 				selection = args.getString(ARGS_ARTICLES_SELECTION);
 				selectionArgs = args.getStringArray(ARGS_ARTICLES_SELECTION_ARGUMENTS);
@@ -456,11 +467,26 @@ public class TopicListFragment extends BaseFragment
 			case R.id.action_delete_listviewex:
 				// TODO: delete in expandable
 				return true;
+			case R.id.action_sort_order:
+				startSortOrderDialog();
 			default:
 				return super.onContextItemSelected(item);
 		}
 	}
 	//--------------------------------------------------
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (resultCode == Activity.RESULT_OK) {
+			switch (requestCode) {
+				case REQUEST_SORT_TYPE:
+					mArticlesSortOrder = data.getStringExtra(SortTypeDialog.PARAM_SORT_TYPE);
+					getLoaderManager().restartLoader(ARTICLES_LOADER, null, this);
+					break;
+			}
+		}
+	}
 
 	@Override
 	public void onNothingSelected(AdapterView<?> parent) {

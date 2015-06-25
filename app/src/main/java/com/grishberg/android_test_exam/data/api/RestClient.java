@@ -299,13 +299,9 @@ public class RestClient {
 			// ------------------ CLIENT REQUEST
 			fileInputStream = new FileInputStream(file);
 
-			// open a URL connection to the Servlet
-			// Open a HTTP connection to the URL
 			URL url	= new URL(urlString);
 			conn = (HttpURLConnection) url.openConnection();
-			// Allow Inputs
 			conn.setDoInput(true);
-			// Allow Outputs
 			conn.setDoOutput(true);
 			// Don't use a cached copy.
 			conn.setUseCaches(false);

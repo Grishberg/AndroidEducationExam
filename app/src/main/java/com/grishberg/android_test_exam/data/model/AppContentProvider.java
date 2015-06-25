@@ -232,11 +232,6 @@ public class AppContentProvider extends ContentProvider {
 		sqlBuilder.append(DbHelper.ARTICLES_CATEGORY_ID);
 
 		String sql = sqlBuilder.toString();
-		try{
-			Cursor c =db.rawQuery(sql, null);
-		} catch (Exception e){
-			e.printStackTrace();
-		}
 		return db.rawQuery(sql, null);
 	}
 }

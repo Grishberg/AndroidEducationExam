@@ -16,19 +16,6 @@ public class DataRequest implements Parcelable {
 	private Article	article;
 	private String	uri;
 
-	public DataRequest(){
-		this(null, null);
-	}
-
-	public DataRequest(long id){
-		this(null, null);
-	}
-
-	public DataRequest(Article article){
-		this(article,null);
-	}
-
-
 	public DataRequest(Article article, String uri){
 		this.article	= article;
 		this.uri		= uri;

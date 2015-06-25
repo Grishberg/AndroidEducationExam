@@ -6,4 +6,10 @@
           android:title="@string/action_delete_listview_text"
           android:orderInCategory="100"
           app:showAsAction="never"/>
+    <item android:id="@+id/action_sort_order"
+          android:title="@string/action_delete_sortorder_text"
+          android:orderInCategory="100"
+          app:showAsAction="never"/>
+
+
 </menu>

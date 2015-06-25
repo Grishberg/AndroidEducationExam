@@ -17,36 +17,28 @@ import java.io.Serializable;
 public class ApiServiceHelper {
 	private static final String TAG = "ApiServiceHelper";
 
-	private static ApiServiceHelper instance;
-
-	public static ApiServiceHelper getInstance() {
-		if (instance == null) {
-			instance = new ApiServiceHelper();
-		}
-		return instance;
-	}
 
 	private ApiServiceHelper() {
 		super();
 	}
 
-	public void getCategories( ResultReceiver onServiceResult){
+	public static  void getCategories( ResultReceiver onServiceResult){
 		startService(null, ApiService.ACTION_GET_CATEGORIES, onServiceResult);
 	}
 
-	public void getArticles( ResultReceiver onServiceResult){
+	public static void getArticles( ResultReceiver onServiceResult){
 		startService(null, ApiService.ACTION_GET_ARTICLES, onServiceResult);
 	}
 
-	public void addArticle(DataRequest data, ResultReceiver onServiceResult){
+	public static void addArticle(DataRequest data, ResultReceiver onServiceResult){
 		startService(data, ApiService.ACTION_ADD_ARTICLE, onServiceResult);
 	}
 
-	public void editArticle(DataRequest data, ResultReceiver onServiceResult){
+	public static void editArticle(DataRequest data, ResultReceiver onServiceResult){
 		startService(data, ApiService.ACTION_EDIT_ARTICLE, onServiceResult);
 	}
 
-	public void deleteArticle(DeleteDataRequest data, ResultReceiver onServiceResult){
+	public static void deleteArticle(DeleteDataRequest data, ResultReceiver onServiceResult){
 		startService(data, ApiService.ACTION_DELETE_ARTICLE, onServiceResult);
 	}
 
@@ -54,7 +46,7 @@ public class ApiServiceHelper {
     utils
      */
 
-	private void startService(Parcelable data, int action, ResultReceiver onServiceResult) {
+	private static void startService(Parcelable data, int action, ResultReceiver onServiceResult) {
 		Intent intent = getIntent(action, onServiceResult);
 		if(data != null){
 			intent.putExtra(ApiService.REQUEST_OBJECT_KEY, data);
@@ -62,14 +54,14 @@ public class ApiServiceHelper {
 		getContext().startService(intent);
 	}
 
-	private Intent getIntent(int action, ResultReceiver onServiceResult) {
+	private static Intent getIntent(int action, ResultReceiver onServiceResult) {
 		final Intent i = new Intent(getContext(), ApiService.class);
 		i.putExtra(ApiService.ACTION_KEY, action);
 		i.putExtra(ApiService.CALLBACK_KEY, onServiceResult);
 		return i;
 	}
 
-	private Context getContext(){
+	private static Context getContext(){
 		return AppController.getAppContext();
 	}
 }
