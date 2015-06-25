@@ -157,7 +157,7 @@ public class Requester {
 		RestClient restClient	= new RestClient();
 		ApiResponse response	= restClient.doDelete(url);
 
-		if(response.status == 200){
+		if(response.getStatus() == 200){
 			//delete in db
 			AppController.getAppContext().getContentResolver()
 					.delete(AppContentProvider.getArticlesUri(id), null, null);
